@@ -32,15 +32,7 @@ app.use("/ytvplus", YTvPlus);
 // مهم لتعرف أن السيرفر يعمل ولتتأكد منصة الاستضافة من نجاح التشغيل
 // ==========================================
 app.get("/", (req, res) => {
-    res.json({
-        status: "success",
-        message: "Server is running perfectly!",
-        endpoints: {
-            sadeem_api: "/sadeem",
-            floratv_api: "/floratv",
-            ytvplus_api: "/ytvplus"
-        }
-    });
+    res.json([]);
 });
 
 
