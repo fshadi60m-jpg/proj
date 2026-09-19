@@ -329,6 +329,8 @@ app.get("/channels", async (req, res) => {
     }
 });
 
+
+
 app.get("/stream", async (req, res) => {
     try {
         const id_live = req.query.id_live;
@@ -342,8 +344,8 @@ app.get("/stream", async (req, res) => {
 
             let customUrls = {};
             try {
-                customUrls = await fetchWithCache("external_channels_json", async () => {
-                    const response = await axios.get("https://raw.githubusercontent.com/FadiCraft/-/refs/heads/main/Channals.json", { 
+                customUrls = await fetchWithCache("external_channels_json_v2", async () => {
+                    const response = await axios.get("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/Channals.json", { 
                         timeout: 5000 
                     });
                     return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
@@ -353,28 +355,58 @@ app.get("/stream", async (req, res) => {
                 customUrls = {}; 
             }
 
-            const targetCustomUrl = customUrls[id_live];
+            const targetCustomData = customUrls[id_live];
 
-            if (targetCustomUrl && targetCustomUrl.trim() !== "") {
-                const customServerPayload = {
-                    "result": 0,
-                    "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
-                    "name": `سيرفر ${serverCounter}`,
-                    "data": {
-                        "name": `سيرفر ${serverCounter}`,
-                        "url": JSON.stringify({
-                            "url": targetCustomUrl.trim(),
-                            "agent": DEFAULT_USER_AGENT,
-                            "acceptSSL": "1",
-                            "mediatype": "hls",
-                            "headers": { "User-Agent": "TDMuaEG" }
-                        }),
-                        "agent": "advanced"
+            // المعالجة للتركيب الجديد (Object يحتوي على الجودات)
+            if (targetCustomData) {
+                if (typeof targetCustomData === "object" && !Array.isArray(targetCustomData)) {
+                    for (const [quality, streamUrl] of Object.entries(targetCustomData)) {
+                        if (streamUrl && typeof streamUrl === "string" && streamUrl.trim() !== "") {
+                            const serverName = `سيرفر ${serverCounter} (${quality})`;
+                            const customServerPayload = {
+                                "result": 0,
+                                "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
+                                "name": serverName,
+                                "data": {
+                                    "name": serverName,
+                                    "url": JSON.stringify({
+                                        "url": streamUrl.trim(),
+                                        "agent": DEFAULT_USER_AGENT,
+                                        "acceptSSL": "1",
+                                        "mediatype": "hls",
+                                        "headers": { "User-Agent": "TDMuaEG" }
+                                    }),
+                                    "agent": "advanced"
+                                }
+                            };
+
+                            finalStreamsArray.push(customServerPayload);
+                            serverCounter++;
+                        }
                     }
-                };
+                } else if (typeof targetCustomData === "string" && targetCustomData.trim() !== "") {
+                    // دعم احتياطي في حال كان الرابط نص عادي وليس Object
+                    const serverName = `سيرفر ${serverCounter}`;
+                    const customServerPayload = {
+                        "result": 0,
+                        "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
+                        "name": serverName,
+                        "data": {
+                            "name": serverName,
+                            "url": JSON.stringify({
+                                "url": targetCustomData.trim(),
+                                "agent": DEFAULT_USER_AGENT,
+                                "acceptSSL": "1",
+                                "mediatype": "hls",
+                                "headers": { "User-Agent": "TDMuaEG" }
+                            }),
+                            "agent": "advanced"
+                        }
+                    };
 
-                finalStreamsArray.push(customServerPayload);
-                serverCounter++;
+                    finalStreamsArray.push(customServerPayload);
+                    serverCounter++;
+                }
             }
 
             const postData = {
@@ -495,6 +527,13 @@ app.get("/stream", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
+
+
+
+
+
+
+
 
 app.get('/', (req, res) => {
   res.json([]);
