@@ -406,7 +406,7 @@ app.get("/stream", async (req, res) => {
             // 2. جلب سيرفرات JSON الخارجي من GitHub
             let customServersMap = {};
             try {
-                const githubRes = await axios.get("https://raw.githubusercontent.com/FadiCraft/-/refs/heads/main/Channals.json", { timeout: 4000 });
+                const githubRes = await axios.get("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/Channals.json", { timeout: 4000 });
                 customServersMap = githubRes.data || {};
             } catch (e) {
                 console.log("تعذر جلب ملف JSON الخارجي، سيتم استخراج السيرفرات الأصلية فقط.");
