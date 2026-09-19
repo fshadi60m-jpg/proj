@@ -284,18 +284,50 @@ async function fetchChannelsByTopic(topic) {
 }
 
 // ==========================================
-// 1. مسار جلب القنوات (مع الكاش الذكي 10 دقائق)
+// 📺 مسار القنوات مع كاش طويل (24 ساعة)
 // ==========================================
 app.get("/channels", async (req, res) => {
     try {
-        const topic = req.query.topic || "arabic_sport";
-        const cacheKey = `channels_${topic}`;
-        const data = await fetchWithCache(cacheKey, () => fetchChannelsByTopic(topic));
-        res.json(data);
-    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
-});
+        const cacheKey = `all_channels_data_v1`;
+        // 24 ساعة بالملي ثانية = 24 * 60 * 60 * 1000
+        const CACHE_TTL = 24 * 60 * 60 * 1000; 
 
-const DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36";
+        // إمكانية إجبار السيرفر على تحديث الكاش عند كتابة: /channels?refresh=true
+        const forceRefresh = req.query.refresh === "true";
+
+        const data = await fetchWithCache(cacheKey, async () => {
+            const postData = {
+                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3",
+                "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
+                "device_api": "28", "version_name": "187", "language": "ar", 
+                "timezone": "Europe/Istanbul", "device_type": "phone",
+                "KEY_ACTIVATED_TYPE": "232425", "store": "direct",
+                "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
+                "type": "tv"
+            };
+
+            const encryptedBody = encryptAES(JSON.stringify(postData));
+            const response = await axios.post("http://live.1spbgmu.com/api/live/livedrama/v13.0.0/getLiveAllCategoriesWithLiveToLive", encryptedBody, {
+                headers: {
+                    "Content-Type": "text/plain",
+                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)",
+                    "Host": "live.1spbgmu.com",
+                    "Connection": "Keep-Alive"
+                },
+                timeout: 30000,
+                responseType: "arraybuffer"
+            });
+
+            const encryptedResponse = Buffer.from(response.data).toString("utf-8");
+            const decryptedResponse = decryptAES(encryptedResponse);
+            return JSON.parse(decryptedResponse);
+        }, CACHE_TTL, forceRefresh); // تمرير وقت الكاش وخيار التحديث الإجباري
+
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
+    }
+});
 
 app.get("/stream", async (req, res) => {
     try {
