@@ -343,7 +343,7 @@ app.get("/stream", async (req, res) => {
                             "agent": DEFAULT_USER_AGENT,
                             "acceptSSL": "1",
                             "mediatype": "hls",
-                            "headers": { "User-Agent": DEFAULT_USER_AGENT }
+                            "headers": { "User-Agent": "TDMuaEG" }
                         }),
                         "agent": "advanced"
                     }
@@ -990,6 +990,7 @@ const allTopics = [
     {"id_topic":"cl","name_topic":"Chile","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cl.png","code":"cl"},
     {"id_topic":"cn","name_topic":"China","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cn.png","code":"cn"}
 ];
+
 
 app.get("/get-all-topics", (req, res) => { res.json(allTopics); });
 
