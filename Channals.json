@@ -1,9 +1,9 @@
 {
   "live_tv_beinsport1": {
     "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1319.css?x=/hls",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1319.css?x=/hls",
+    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1319.css?x=/hls",
+    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1319.css?x=/hls"
   },
   "live_tv_beinsport2": {
     "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1328.css?x=/hls",
