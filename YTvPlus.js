@@ -331,10 +331,9 @@ app.get("/channels", async (req, res) => {
 
 
 
-// أضف هذا السطر في أعلى الملف مع الثوابت/التعريفات الأخرى إذا لم يكن موجوداً
+// تعريف المتغير الافتراضي لـ User-Agent
 const DEFAULT_USER_AGENT = "TDMuaEG";
 
-// استبدل كود app.get("/stream", ...) القديم بهذا الكود الكامل:
 app.get("/stream", async (req, res) => {
     try {
         const id_live = req.query.id_live;
@@ -343,8 +342,8 @@ app.get("/stream", async (req, res) => {
         const cacheKey = `stream_full_array_${id_live}`;
 
         const data = await fetchWithCache(cacheKey, async () => {
-            let finalStreamsArray = [];
-            let serverCounter = 1;
+            let activeStreams = [];
+            let emptyStreams = [];
 
             let customUrls = {};
             try {
@@ -361,18 +360,16 @@ app.get("/stream", async (req, res) => {
 
             const targetCustomData = customUrls[id_live];
 
-            // المعالجة للتركيب الجديد (Object يحتوي على الجودات)
+            // 1. معالجة السيرفرات الخاصة من ملف JSON
             if (targetCustomData) {
                 if (typeof targetCustomData === "object" && !Array.isArray(targetCustomData)) {
                     for (const [quality, streamUrl] of Object.entries(targetCustomData)) {
                         if (streamUrl && typeof streamUrl === "string" && streamUrl.trim() !== "") {
-                            const serverName = `سيرفر ${serverCounter} (${quality})`;
                             const customServerPayload = {
                                 "result": 0,
                                 "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
-                                "name": serverName,
                                 "data": {
-                                    "name": serverName,
+                                    "qualityLabel": quality,
                                     "url": JSON.stringify({
                                         "url": streamUrl.trim(),
                                         "agent": DEFAULT_USER_AGENT,
@@ -383,20 +380,14 @@ app.get("/stream", async (req, res) => {
                                     "agent": "advanced"
                                 }
                             };
-
-                            finalStreamsArray.push(customServerPayload);
-                            serverCounter++;
+                            activeStreams.push(customServerPayload);
                         }
                     }
                 } else if (typeof targetCustomData === "string" && targetCustomData.trim() !== "") {
-                    // دعم احتياطي في حال كان الرابط نص عادي وليس Object
-                    const serverName = `سيرفر ${serverCounter}`;
                     const customServerPayload = {
                         "result": 0,
                         "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
-                        "name": serverName,
                         "data": {
-                            "name": serverName,
                             "url": JSON.stringify({
                                 "url": targetCustomData.trim(),
                                 "agent": DEFAULT_USER_AGENT,
@@ -407,12 +398,11 @@ app.get("/stream", async (req, res) => {
                             "agent": "advanced"
                         }
                     };
-
-                    finalStreamsArray.push(customServerPayload);
-                    serverCounter++;
+                    activeStreams.push(customServerPayload);
                 }
             }
 
+            // 2. جلب السيرفرات الأساسية من API الدراما
             const postData = {
                 "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
                 "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul",
@@ -519,19 +509,51 @@ app.get("/stream", async (req, res) => {
                 }
 
                 if (serverPayload) {
-                    serverPayload.name = `سيرفر ${serverCounter}`; 
-                    if(serverPayload.data) { serverPayload.data.name = `سيرفر ${serverCounter}`; }
-                    finalStreamsArray.push(serverPayload);
-                    serverCounter++;
+                    // التحقق مما إذا كان السيرفر شغالاً أم فارغاً
+                    let checkUrl = serverPayload.data ? serverPayload.data.url : "";
+                    const isEmpty = !checkUrl || checkUrl === "2" || checkUrl === "empty" || checkUrl.length < 5;
+
+                    if (isEmpty) {
+                        emptyStreams.push(serverPayload);
+                    } else {
+                        activeStreams.push(serverPayload);
+                    }
                 }
             }
+
+            // 3. بناء القائمة النهائية وتحديد أسماء السيرفرات
+            let finalStreamsArray = [];
+            let serverCounter = 1;
+
+            // أ) السيرفرات النشطة أولاً
+            for (const item of activeStreams) {
+                let qualityLabel = item.data && item.data.qualityLabel ? ` (${item.data.qualityLabel})` : "";
+                if (item.data) delete item.data.qualityLabel;
+
+                const serverName = `سيرفر ${serverCounter}${qualityLabel}`;
+                item.name = serverName;
+                if (item.data) item.data.name = serverName;
+
+                finalStreamsArray.push(item);
+                serverCounter++;
+            }
+
+            // ب) السيرفرات الفارغة في النهاية مع إشارة (فارغ)
+            for (const item of emptyStreams) {
+                const serverName = `سيرفر ${serverCounter} (فارغ)`;
+                item.name = serverName;
+                if (item.data) item.data.name = serverName;
+
+                finalStreamsArray.push(item);
+                serverCounter++;
+            }
+
             return finalStreamsArray;
         });
 
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
-
 
 
 
