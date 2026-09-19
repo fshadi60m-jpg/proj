@@ -920,8 +920,7 @@ const allTopics = [
     // الأكثر مشاهدة - الأكثر طلباً
     {"id_topic":"hot_now","name_topic":"الأكثر مشاهدة","img_url_topic":"http://logo.twoapistack.work/img/topics/hot_now.png","code":""},
     
-    // مباريات مباشرة
-    {"id_topic":"live_matches","name_topic":"مباريات مباشرة","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_fire.jpg","code":""},
+    
     
     // قنوات بي إن سبورت
     {"id_topic":"bein_sport","name_topic":"بي ان سبورت","img_url_topic":"http://logo.twoapistack.work/img/topics/bein_sport.png","code":""},
@@ -989,14 +988,7 @@ const allTopics = [
     // انيمي
     {"id_topic":"anime","name_topic":"انيمي","img_url_topic":"http://logo.twoapistack.work/img/topics/anime.jpg","code":""},
     
-    // ريلاكس
-    {"id_topic":"relax","name_topic":"ريلاكس","img_url_topic":"http://logo.twoapistack.work/img/topics/relax.png","code":""},
-    
-    // Live Twitch
-    {"id_topic":"twitch","name_topic":"Live Twitch","img_url_topic":"http://logo.twoapistack.work/img/topics/twitch.png","code":""},
-    
-    // unsorted
-    {"id_topic":"unsorted","name_topic":"unsorted","img_url_topic":"","code":""},
+   
     
     // الدول العربية
     {"id_topic":"963","name_topic":"سوريا","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_sy.png","code":"sy"},
