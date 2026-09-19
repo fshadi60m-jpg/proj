@@ -331,6 +331,10 @@ app.get("/channels", async (req, res) => {
 
 
 
+// أضف هذا السطر في أعلى الملف مع الثوابت/التعريفات الأخرى إذا لم يكن موجوداً
+const DEFAULT_USER_AGENT = "TDMuaEG";
+
+// استبدل كود app.get("/stream", ...) القديم بهذا الكود الكامل:
 app.get("/stream", async (req, res) => {
     try {
         const id_live = req.query.id_live;
@@ -374,7 +378,7 @@ app.get("/stream", async (req, res) => {
                                         "agent": DEFAULT_USER_AGENT,
                                         "acceptSSL": "1",
                                         "mediatype": "hls",
-                                        "headers": { "User-Agent": "TDMuaEG" }
+                                        "headers": { "User-Agent": DEFAULT_USER_AGENT }
                                     }),
                                     "agent": "advanced"
                                 }
@@ -398,7 +402,7 @@ app.get("/stream", async (req, res) => {
                                 "agent": DEFAULT_USER_AGENT,
                                 "acceptSSL": "1",
                                 "mediatype": "hls",
-                                "headers": { "User-Agent": "TDMuaEG" }
+                                "headers": { "User-Agent": DEFAULT_USER_AGENT }
                             }),
                             "agent": "advanced"
                         }
@@ -527,7 +531,6 @@ app.get("/stream", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
-
 
 
 
