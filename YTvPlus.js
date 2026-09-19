@@ -765,47 +765,9 @@ app.get("/last/:id_live", async (req, res) => {
 });
 
 // ==========================================
-// 🆕 قاموس المعرفات لتحويل الـ channel ID إلى اسم القناة الأصلي
+// 1. قاموس المعرفات والدوال المساعدة للجلب
 // ==========================================
 const MATCH_CHANNEL_MAP = {
-    "live_tv_beinsport2": "beIN Sports 2",
-    "live_tv_beinsport1": "beIN Sports 1",
-    "live_tv_beinsport3": "beIN Sports 3",
-    "live_tv_beinsport4": "beIN Sports 4",
-    "live_tv_beinsport5": "beIN Sports 5",
-    "live_tv_beinsport6": "beIN Sports 6",
-    "live_tv_beinsport7": "beIN Sports 7",
-    "live_tv_beinsport_news": "beIN Sports الإخبارية",
-    "live_tv_ssc1": "SSC 1",
-    "live_tv_ssc2": "SSC 2",
-    "live_tv_ssc3": "SSC 3",
-    "live_tv_ssc_news": "SSC News"
-};
-
-/**
- * دالة استخراج اسم القناة الحقيقي
- */
-function getChannelName(channelRaw) {
-    if (!channelRaw) return "غير معروفة";
-    
-    // 1. إذا كان موجوداً في القاموس المباشر
-    if (CHANNEL_MAP[channelRaw]) {
-        return CHANNEL_MAP[channelRaw];
-    }
-    
-    // 2. معالجة وتنظيف المعرف بشكل تلقائي في حال عدم وجوده بالقاموس
-    let cleaned = channelRaw
-        .replace(/^live_tv_/i, "")
-        .replace(/_/g, " ")
-        .toUpperCase();
-        
-    return cleaned || channelRaw;
-}
-
-// ==========================================
-// 🆕 1. القاموس والدوال المساعدة الجديدة
-// ==========================================
-const CHANNEL_MAP = {
     "live_tv_beinsport2": "beIN Sports 2",
     "live_tv_beinsport1": "beIN Sports 1",
     "live_tv_beinsport3": "beIN Sports 3",
@@ -823,8 +785,8 @@ const CHANNEL_MAP = {
 async function fetchChannelRealName(channelId) {
     if (!channelId) return "غير معروفة";
 
-    if (CHANNEL_MAP[channelId]) {
-        return CHANNEL_MAP[channelId];
+    if (MATCH_CHANNEL_MAP[channelId]) {
+        return MATCH_CHANNEL_MAP[channelId];
     }
 
     try {
@@ -867,23 +829,8 @@ async function fetchChannelRealName(channelId) {
     }
 }
 
-function parseCleanScore(score1, score2) {
-    if (score1 === undefined || score1 === null || score1 === "" || score1 === "-") {
-        return "";
-    }
-
-    const clean1 = score1.toString().replace(/[^0-9]/g, "");
-    const clean2 = score2 ? score2.toString().replace(/[^0-9]/g, "") : "0";
-
-    if (clean1 !== "") {
-        return `${clean1} - ${clean2}`;
-    }
-
-    return "";
-}
-
 // ==========================================
-// 🆕 2. مسار المباريات الجديد بديل القديم (/mach)
+// 2. مسار المباريات (/mach)
 // ==========================================
 app.get("/mach", async (req, res) => {
     try {
@@ -941,7 +888,8 @@ app.get("/mach", async (req, res) => {
                     matchStatus = "لم تبدأ بعد";
                 }
 
-                const finalScore = parseCleanScore(match.firstTeamScore, match.secondtTeamScore);
+                // طباعة النتيجة كما هي قادمة من السيرفر تماماً
+                const rawScore = match.score || match.firstTeamScore || "";
                 const rawChannelId = match.channel || "";
                 const actualChannelName = await fetchChannelRealName(rawChannelId);
 
@@ -955,7 +903,7 @@ app.get("/mach", async (req, res) => {
                     time: matchTime,
                     date: dateVal, 
                     status: matchStatus, 
-                    score: finalScore, 
+                    score: rawScore, 
                     channel: actualChannelName, 
                     id_live: rawChannelId
                 };
@@ -967,7 +915,6 @@ app.get("/mach", async (req, res) => {
         res.status(500).json({ error: true, message: error.message }); 
     }
 });
-
 app.all("/resolve", async (req, res) => {
     try {
         const targetUrl = req.query.url || req.body.url;
