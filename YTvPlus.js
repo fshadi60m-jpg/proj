@@ -767,7 +767,7 @@ app.get("/last/:id_live", async (req, res) => {
 // ==========================================
 // 🆕 قاموس المعرفات لتحويل الـ channel ID إلى اسم القناة الأصلي
 // ==========================================
-const CHANNEL_MAP = {
+const MATCH_CHANNEL_MAP = {
     "live_tv_beinsport2": "beIN Sports 2",
     "live_tv_beinsport1": "beIN Sports 1",
     "live_tv_beinsport3": "beIN Sports 3",
