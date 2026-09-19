@@ -834,6 +834,9 @@ app.get("/last/:id_live", async (req, res) => {
     } catch (error) { res.status(error.message.includes("لم يتم العثور") ? 404 : 500).json({ error: true, message: error.message }); }
 });
 
+
+
+
 // ==========================================
 // 2. مسار المباريات (/mach)
 // ==========================================
@@ -920,6 +923,10 @@ app.get("/mach", async (req, res) => {
         res.status(500).json({ error: true, message: error.message }); 
     }
 });
+
+
+
+
 app.all("/resolve", async (req, res) => {
     try {
         const targetUrl = req.query.url || req.body.url;
@@ -930,7 +937,15 @@ app.all("/resolve", async (req, res) => {
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
 
-app.get('/extract', async (req, res) => {
+
+// إضافة مسار الدومين الأساسي ليعرض مصفوفة فارغة
+app.get('/', (req, res) => {
+  res.json([]);
+});
+
+
+
+app.get("/extract", async (req, res) => {
     try {
         const targetUrl = req.query.url;
         const channelId = req.query.id_live || "test";
@@ -944,8 +959,7 @@ const allTopics = [
     // الأكثر مشاهدة - الأكثر طلباً
     {"id_topic":"hot_now","name_topic":"الأكثر مشاهدة","img_url_topic":"http://logo.twoapistack.work/img/topics/hot_now.png","code":""},
     
-    // مباريات مباشرة
-    {"id_topic":"live_matches","name_topic":"مباريات مباشرة","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_fire.jpg","code":""},
+    
     
     // قنوات بي إن سبورت
     {"id_topic":"bein_sport","name_topic":"بي ان سبورت","img_url_topic":"http://logo.twoapistack.work/img/topics/bein_sport.png","code":""},
