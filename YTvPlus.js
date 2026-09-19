@@ -845,17 +845,49 @@ app.get("/mach", async (req, res) => {
         const cacheKey = `matches_data`;
         
         const data = await fetchWithCache(cacheKey, async () => {
+            // 1. جلب قائمة القنوات لربط الـ ID باسم القناة
+            let channelsMap = new Map();
+            try {
+                // جلب قنوات الرياضة والأكثر مشاهدة لبناء خريطة الأسماء
+                const [sportChannels, hotChannels] = await Promise.all([
+                    fetchWithCache("channels_arabic_sport", () => fetchChannelsByTopic("arabic_sport")),
+                    fetchWithCache("channels_hot_now", () => fetchChannelsByTopic("hot_now"))
+                ]);
+                
+                [...sportChannels, ...hotChannels].forEach(ch => {
+                    if (ch.id_live && ch.name) {
+                        channelsMap.set(ch.id_live, ch.name);
+                    }
+                });
+            } catch (err) {
+                console.error("فشل جلب أسماء القنوات لمطابقتها مع المباريات:", err.message);
+            }
+
+            // 2. جلب بيانات المباريات من السيرفر
             const postData = {
-                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
-                "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", "device_type": "phone",
-                "KEY_ACTIVATED_TYPE": "232425", "store": "direct", "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
+                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3",
+                "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
+                "device_api": "28",
+                "version_name": "187",
+                "language": "ar",
+                "timezone": "Europe/Istanbul",
+                "device_type": "phone",
+                "KEY_ACTIVATED_TYPE": "232425",
+                "store": "direct",
+                "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
                 "type": "tv"
             };
 
             const encryptedBody = encryptAES(JSON.stringify(postData));
             const response = await axios.post("http://sport.1spbgmu.com/sport/getMatches", encryptedBody, {
-                headers: { "Content-Type": "text/plain", "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", "Host": "sport.1spbgmu.com", "Connection": "Keep-Alive" },
-                timeout: 30000, responseType: "arraybuffer"
+                headers: { 
+                    "Content-Type": "text/plain", 
+                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", 
+                    "Host": "sport.1spbgmu.com", 
+                    "Connection": "Keep-Alive" 
+                },
+                timeout: 30000, 
+                responseType: "arraybuffer"
             });
 
             const encryptedResponse = Buffer.from(response.data).toString("utf-8");
@@ -865,27 +897,66 @@ app.get("/mach", async (req, res) => {
             let rawMatches = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.matches || jsonResponse.data || []);
 
             return rawMatches.map(match => {
-                let matchTime = ""; let matchStatus = "لم تبدأ"; let dateVal = match.date || "";
+                let matchTime = "";
+                let matchStatus = "لم تبدأ";
+                let dateVal = (match.date || "").trim();
                 
-                if (dateVal.includes("انتهت")) { matchStatus = "انتهت"; matchTime = "انتهت"; } 
-                else {
+                // --- تحديد حالة المباراة الديناميكية ---
+                if (dateVal.includes("انتهت") || dateVal.includes("FT") || dateVal.includes("Ended")) {
+                    matchStatus = "انتهت";
+                    matchTime = "انتهت";
+                } else if (
+                    dateVal.includes("'") || 
+                    dateVal.includes("مباشر") || 
+                    dateVal.includes("الشوط") || 
+                    dateVal.includes("استراحة") || 
+                    dateVal.includes("Live") ||
+                    dateVal.includes("HT")
+                ) {
+                    matchStatus = "جارية الآن";
+                    matchTime = dateVal;
+                } else {
                     const timeMatch = dateVal.match(/\d{2}:\d{2}/);
-                    if (timeMatch) matchTime = timeMatch[0]; else matchTime = dateVal;
+                    if (timeMatch) {
+                        matchTime = timeMatch[0];
+                        matchStatus = "لم تبدأ";
+                    } else {
+                        matchTime = dateVal;
+                        // إذا كانت يحتوي على نص غير الوقت ولم تنتهي، تعتبر جارية
+                        matchStatus = dateVal ? "جارية الآن" : "لم تبدأ";
+                    }
                 }
 
                 let finalScore = "";
-                if (match.firstTeamScore && match.firstTeamScore !== "-") finalScore = match.firstTeamScore;
+                if (match.firstTeamScore && match.firstTeamScore !== "-") {
+                    finalScore = `${match.firstTeamScore} - ${match.secondtTeamScore || 0}`;
+                }
+
+                // --- جلب اسم القناة بدلاً من الـ ID ---
+                const rawChannelId = match.channel || "";
+                const channelName = channelsMap.get(rawChannelId) || rawChannelId;
 
                 return {
-                    title: match.title || "", league: match.topic || "", team1: match.firstTeam || "", team2: match.secondtTeam || "",
-                    team1_logo: match.firstTeamImage || "", team2_logo: match.secondtTeamImage || "", time: matchTime,
-                    date: dateVal, status: matchStatus, score: finalScore, channel: match.channel || "", id_live: match.channel || ""
+                    title: match.title || "",
+                    league: match.topic || "",
+                    team1: match.firstTeam || "",
+                    team2: match.secondtTeam || "",
+                    team1_logo: match.firstTeamImage || "",
+                    team2_logo: match.secondtTeamImage || "",
+                    time: matchTime,
+                    date: dateVal,
+                    status: matchStatus,
+                    score: finalScore,
+                    channel: channelName, // أصبح يعرض الاسم العربي للقناة
+                    id_live: rawChannelId // احتفظنا بالـ ID لاستخدامه في تشغيل البث
                 };
             });
         });
 
         res.json(data);
-    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
+    } catch (error) { 
+        res.status(500).json({ error: true, message: error.message }); 
+    }
 });
 
 app.all("/resolve", async (req, res) => {
