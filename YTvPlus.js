@@ -6,6 +6,51 @@ const https = require("https");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
+
+
+
+// --- دالة تنسيق الأرقام (تحول 1500 إلى 1.5K) ---
+function formatRequestCount(num) {
+    if (!num || num === 0) return "0";
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+}
+
+// --- نظام تتبع وتسجيل طلبات القنوات خلال آخر دقيقة ---
+const channelRequestsMap = new Map();
+
+// دالة تسجّل طلب القناة
+function recordChannelRequest(channelId) {
+    if (!channelId) return;
+    const now = Date.now();
+    if (!channelRequestsMap.has(channelId)) {
+        channelRequestsMap.set(channelId, []);
+    }
+    channelRequestsMap.get(channelId).push(now);
+}
+
+// دالة تحسب وترجع العدد المنسق لآخر 60 ثانية
+function getFormattedRequestsCount(channelId) {
+    if (!channelRequestsMap.has(channelId)) return "0";
+    const now = Date.now();
+    const oneMinuteAgo = now - 60 * 1000;
+    
+    // إزالة الطلبات القديمة
+    const validRequests = channelRequestsMap.get(channelId).filter(timestamp => timestamp > oneMinuteAgo);
+    channelRequestsMap.set(channelId, validRequests);
+    
+    return formatRequestCount(validRequests.length);
+}
+
+
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -298,13 +343,60 @@ app.get("/channels", async (req, res) => {
 
 
 
-// تعريف المتغير الافتراضي لـ User-Agent
-const DEFAULT_USER_AGENT = "TDMuaEG";
+// =========================================================
+// 1. نظام تتبع وتسجيل طلبات القنوات وتنسيق الأرقام
+// =========================================================
+
+// دالة لتنسيق الأرقام إلى صيغة (1.5K أو 1M)
+function formatRequestCount(num) {
+    if (!num || num === 0) return "0";
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+}
+
+// خريطة لحفظ أوقات طلب كل قناة
+const channelRequestsMap = new Map();
+
+// دالة تسجيل طلب قناة
+function recordChannelRequest(channelId) {
+    if (!channelId) return;
+    const now = Date.now();
+    if (!channelRequestsMap.has(channelId)) {
+        channelRequestsMap.set(channelId, []);
+    }
+    channelRequestsMap.get(channelId).push(now);
+}
+
+// دالة تحسب وترجع عدد الطلبات بآخر 60 ثانية مخصصة ومصاغة بشكل جذاب
+function getFormattedRequestsCount(channelId) {
+    if (!channelRequestsMap.has(channelId)) return "0";
+    const now = Date.now();
+    const oneMinuteAgo = now - 60 * 1000;
+    
+    // إزالة الطلبات التي مر عليها أكثر من دقيقة
+    const validRequests = channelRequestsMap.get(channelId).filter(timestamp => timestamp > oneMinuteAgo);
+    channelRequestsMap.set(channelId, validRequests);
+    
+    return formatRequestCount(validRequests.length);
+}
+
+
+// =========================================================
+// 2. مسار /stream الجاهز والمعدّل بالكامل
+// =========================================================
 
 app.get("/stream", async (req, res) => {
     try {
         const id_live = req.query.id_live;
         if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id_live" });
+
+        // تسجيل الطلب فوراً للقناة الحالية
+        recordChannelRequest(id_live);
 
         const cacheKey = `stream_full_array_${id_live}`;
 
@@ -476,7 +568,6 @@ app.get("/stream", async (req, res) => {
                 }
 
                 if (serverPayload) {
-                    // التحقق مما إذا كان السيرفر شغالاً أم فارغاً
                     let checkUrl = serverPayload.data ? serverPayload.data.url : "";
                     const isEmpty = !checkUrl || checkUrl === "2" || checkUrl === "empty" || checkUrl.length < 5;
 
@@ -488,11 +579,10 @@ app.get("/stream", async (req, res) => {
                 }
             }
 
-            // 3. بناء القائمة النهائية وتحديد أسماء السيرفرات
+            // 3. بناء القائمة النهائية
             let finalStreamsArray = [];
             let serverCounter = 1;
 
-            // أ) السيرفرات النشطة أولاً
             for (const item of activeStreams) {
                 let qualityLabel = item.data && item.data.qualityLabel ? ` (${item.data.qualityLabel})` : "";
                 if (item.data) delete item.data.qualityLabel;
@@ -505,7 +595,6 @@ app.get("/stream", async (req, res) => {
                 serverCounter++;
             }
 
-            // ب) السيرفرات الفارغة في النهاية مع إشارة (فارغ)
             for (const item of emptyStreams) {
                 const serverName = `سيرفر ${serverCounter} (فارغ)`;
                 item.name = serverName;
@@ -518,11 +607,17 @@ app.get("/stream", async (req, res) => {
             return finalStreamsArray;
         });
 
-        res.json(data);
-    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
+        // إرجاع النتيجة مع حقل عدد الطلبات
+        res.json({
+            id_live: id_live,
+            requests_last_minute: getFormattedRequestsCount(id_live),
+            streams: data
+        });
+
+    } catch (error) { 
+        res.status(500).json({ error: true, message: error.message }); 
+    }
 });
-
-
 
 
 
