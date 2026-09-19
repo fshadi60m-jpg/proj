@@ -340,12 +340,11 @@ app.get("/stream", async (req, res) => {
             return res.status(400).json({ error: true, message: "يرجى تزويد id_live القناة" });
         }
 
-        const cacheKey = `stream_data_${id_live}`;
-        // كاش لمدة 5 دقائق لبيانات البث لضمان الاستقرار والسرعة
+        const cacheKey = `stream_data_v3_${id_live}`;
         const STREAM_CACHE_TTL = 5 * 60 * 1000;
 
         const data = await fetchWithCache(cacheKey, async () => {
-            // 1. جلب سيرفرات القناة الأساسية من API الخارجي
+            // 1. جلب سيرفرات القناة الأساسية من الـ API الخارجي
             const streamsPostData = {
                 "user_id": "_82668_1785761367217_notloggedin.com_dramalive3",
                 "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
@@ -370,29 +369,34 @@ app.get("/stream", async (req, res) => {
             const decryptedStreamRes = decryptAES(Buffer.from(streamRes.data).toString("utf-8"));
             const streamJson = JSON.parse(decryptedStreamRes);
 
-            // استخراج قائمة السيرفرات القادمة من الـ API الأساسي
-            let rawServers = streamJson.live?.servers || streamJson.servers || streamJson.data || [];
+            // استخراج قائمة السيرفرات المتاحة أصلياً من الاستجابة
+            let originalServers = [];
+            if (Array.isArray(streamJson.servers)) {
+                originalServers = streamJson.servers;
+            } else if (streamJson.live && Array.isArray(streamJson.live.servers)) {
+                originalServers = streamJson.live.servers;
+            } else if (Array.isArray(streamJson.data)) {
+                originalServers = streamJson.data;
+            }
 
             // 2. جلب سيرفرات JSON الخارجي من GitHub
             let customServersMap = {};
             try {
-                const githubRes = await axios.get("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/Channals.json", { timeout: 4000 });
+                const githubRes = await axios.get("https://raw.githubusercontent.com/FadiCraft/-/refs/heads/main/Channals.json", { timeout: 4000 });
                 customServersMap = githubRes.data || {};
             } catch (e) {
-                console.log("تعذر جلب ملف JSON الخارجي، سيتم التجاوز.");
+                console.log("تعذر جلب ملف JSON الخارجي، سيتم الاستمرار بالسيرفرات الأصلية فقط.");
             }
 
             let customServersList = [];
             const channelCustomData = customServersMap[id_live];
 
-            // 3. بناء سيرفرات JSON الخارجي ووضعها في البداية مرتبة من الأعلى جودة للأقل
+            // 3. معالجة وتجهيز السيرفرات الخارجية للجودات
             if (channelCustomData) {
-                // ترتيب الجودات تنازلياً من الأعلى إلى الأقل
                 const qualityOrder = ["1080p", "720p", "480p", "360p", "240p"];
                 let serverCounter = 1;
 
                 if (typeof channelCustomData === "object" && !Array.isArray(channelCustomData)) {
-                    // فرز الجودات المتوفرة بناءً على الترتيب المكتوب اعلاه
                     const sortedQualities = Object.keys(channelCustomData).sort((a, b) => {
                         let idxA = qualityOrder.indexOf(a.toLowerCase());
                         let idxB = qualityOrder.indexOf(b.toLowerCase());
@@ -403,71 +407,73 @@ app.get("/stream", async (req, res) => {
 
                     sortedQualities.forEach((quality) => {
                         const streamUrl = channelCustomData[quality];
-                        if (streamUrl && streamUrl.trim() !== "") {
+                        if (streamUrl && typeof streamUrl === "string" && streamUrl.trim() !== "") {
+                            const serverName = `سيرفر ${serverCounter} (${quality})`;
                             customServersList.push({
-                                name: `سيرفر ${serverCounter} (${quality})`,
+                                name: serverName,
+                                url: streamUrl,
+                                agent: "TDMuaEG",
                                 data: {
                                     url: streamUrl,
-                                    agent: "shai",
-                                    name: `سيرفر ${serverCounter} (${quality})`
+                                    agent: "TDMuaEG",
+                                    name: serverName
                                 }
                             });
                             serverCounter++;
                         }
                     });
                 } else if (typeof channelCustomData === "string" && channelCustomData.trim() !== "") {
-                    // في حال كان الرابط نصياً مباشراً بدون جودات متعددة
+                    const serverName = "سيرفر 1";
                     customServersList.push({
-                        name: "سيرفر 1",
+                        name: serverName,
+                        url: channelCustomData,
+                        agent: "TDMuaEG",
                         data: {
                             url: channelCustomData,
-                            agent: "shai",
-                            name: "سيرفر 1"
+                            agent: "TDMuaEG",
+                            name: serverName
                         }
                     });
                 }
             }
 
-            // 4. تصنيف وفرز السيرفرات المتبقية (الفارغة وغير الفارغة)
-            let validServers = [];
-            let emptyServers = [];
+            // 4. فرز السيرفرات الأصلية لترتيب الفارغ في النهاية
+            let validOriginal = [];
+            let emptyOriginal = [];
 
-            rawServers.forEach((server) => {
+            originalServers.forEach((server) => {
                 const urlVal = server?.data?.url || server?.url || "";
-                
-                // فحص ما إذا كان الرابط فارغاً أو يضم قيم مثل "0" أو "1" أو "2" فقط
                 const isEmpty = !urlVal || urlVal.trim() === "" || urlVal.trim().length <= 2;
 
                 if (isEmpty) {
-                    let serverName = server.name || server?.data?.name || "سيرفر غير معنون";
-                    if (!serverName.includes("(فارغ)")) {
-                        serverName = `${serverName} (فارغ)`;
+                    let sName = server.name || server?.data?.name || "سيرفر غير معنون";
+                    if (!sName.includes("(فارغ)")) {
+                        sName = `${sName} (فارغ)`;
                     }
 
-                    emptyServers.push({
+                    emptyOriginal.push({
                         ...server,
-                        name: serverName,
+                        name: sName,
                         data: {
                             ...(server.data || {}),
-                            name: serverName
+                            name: sName
                         }
                     });
                 } else {
-                    validServers.push(server);
+                    validOriginal.push(server);
                 }
             });
 
-            // 5. تجميع السيرفرات بالتدرج المطابق للمطلوب: (السيرفرات الخارجية -> السيرفرات الشغالة -> السيرفرات الفارغة)
-            const finalServersList = [...customServersList, ...validServers, ...emptyServers];
+            // 5. الدمج النهائي بالتنسيق: (سيرفرات الجودات الخارجية -> السيرفرات الأصلية الفعالة -> السيرفرات الأصلية الفارغة)
+            const allServers = [...customServersList, ...validOriginal, ...emptyOriginal];
 
-            return {
-                ...streamJson,
-                servers: finalServersList,
-                live: streamJson.live ? {
-                    ...streamJson.live,
-                    servers: finalServersList
-                } : undefined
-            };
+            // إعادة بناء الاستجابة بحيث تصبح البنية متناسقة ونظيفة
+            if (streamJson.live) {
+                streamJson.live.servers = allServers;
+            }
+            streamJson.servers = allServers;
+
+            return streamJson;
         }, STREAM_CACHE_TTL);
 
         res.json(data);
@@ -475,7 +481,6 @@ app.get("/stream", async (req, res) => {
         res.status(500).json({ error: true, message: error.message });
     }
 });
-
 
 
 app.get('/', (req, res) => {
