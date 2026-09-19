@@ -848,7 +848,6 @@ app.get("/mach", async (req, res) => {
             // 1. جلب قائمة القنوات لربط الـ ID باسم القناة
             let channelsMap = new Map();
             try {
-                // جلب قنوات الرياضة والأكثر مشاهدة لبناء خريطة الأسماء
                 const [sportChannels, hotChannels] = await Promise.all([
                     fetchWithCache("channels_arabic_sport", () => fetchChannelsByTopic("arabic_sport")),
                     fetchWithCache("channels_hot_now", () => fetchChannelsByTopic("hot_now"))
@@ -922,14 +921,8 @@ app.get("/mach", async (req, res) => {
                         matchStatus = "لم تبدأ";
                     } else {
                         matchTime = dateVal;
-                        // إذا كانت يحتوي على نص غير الوقت ولم تنتهي، تعتبر جارية
                         matchStatus = dateVal ? "جارية الآن" : "لم تبدأ";
                     }
-                }
-
-                let finalScore = "";
-                if (match.firstTeamScore && match.firstTeamScore !== "-") {
-                    finalScore = `${match.firstTeamScore} - ${match.secondtTeamScore || 0}`;
                 }
 
                 // --- جلب اسم القناة بدلاً من الـ ID ---
@@ -946,9 +939,9 @@ app.get("/mach", async (req, res) => {
                     time: matchTime,
                     date: dateVal,
                     status: matchStatus,
-                    score: finalScore,
-                    channel: channelName, // أصبح يعرض الاسم العربي للقناة
-                    id_live: rawChannelId // احتفظنا بالـ ID لاستخدامه في تشغيل البث
+                    score: match.firstTeamScore || "", // طباعة النتيجة القادمة من السيرفر مباشرة دون تعديل
+                    channel: channelName,
+                    id_live: rawChannelId
                 };
             });
         });
