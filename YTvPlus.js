@@ -340,11 +340,11 @@ app.get("/stream", async (req, res) => {
             return res.status(400).json({ error: true, message: "يرجى تزويد id_live القناة" });
         }
 
-        const cacheKey = `stream_data_v4_${id_live}`;
+        const cacheKey = `stream_data_v5_${id_live}`;
         const STREAM_CACHE_TTL = 5 * 60 * 1000;
 
         const data = await fetchWithCache(cacheKey, async () => {
-            // 1. جلب سيرفرات القناة الأساسية من الـ API الخارجي
+            // 1. جلب سيرفرات القناة الأساسية من API الخارجي
             const streamsPostData = {
                 "user_id": "_82668_1785761367217_notloggedin.com_dramalive3",
                 "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
@@ -369,12 +369,34 @@ app.get("/stream", async (req, res) => {
             const decryptedStreamRes = decryptAES(Buffer.from(streamRes.data).toString("utf-8"));
             const streamJson = JSON.parse(decryptedStreamRes);
 
-            // استخراج قائمة السيرفرات الأصلية
+            // استخراج قائمة السيرفرات الأصلية مهما كان شكل الاستجابة
             let originalServers = [];
             if (Array.isArray(streamJson)) {
                 originalServers = streamJson;
-            } else if (streamJson.live && Array.isArray(streamJson.live.servers)) {
-                originalServers = streamJson.live.servers;
+            } else if (streamJson.live) {
+                if (Array.isArray(streamJson.live.servers)) {
+                    originalServers = streamJson.live.servers;
+                } else if (streamJson.live.backup) {
+                    // في حال كانت السيرفرات قادمة ضمن سلسلة النص المشفر backup
+                    try {
+                        const rawBackup = streamJson.live.backup;
+                        const splitBackup = rawBackup.split("-;-").filter(s => s.trim() !== "");
+                        originalServers = splitBackup.map(item => {
+                            if (item.trim().startsWith("{")) {
+                                try {
+                                    const parsed = JSON.parse(item.trim());
+                                    return {
+                                        url: JSON.stringify(parsed),
+                                        agent: "advanced"
+                                    };
+                                } catch(e) {
+                                    return { url: item.trim(), agent: "redirect" };
+                                }
+                            }
+                            return { url: item.trim(), agent: "redirect" };
+                        });
+                    } catch(e) {}
+                }
             } else if (Array.isArray(streamJson.servers)) {
                 originalServers = streamJson.servers;
             } else if (Array.isArray(streamJson.data)) {
@@ -387,13 +409,13 @@ app.get("/stream", async (req, res) => {
                 const githubRes = await axios.get("https://raw.githubusercontent.com/FadiCraft/-/refs/heads/main/Channals.json", { timeout: 4000 });
                 customServersMap = githubRes.data || {};
             } catch (e) {
-                console.log("تعذر جلب ملف JSON الخارجي، سيتم الاستمرار بالسيرفرات الأصلية فقط.");
+                console.log("تعذر جلب ملف JSON الخارجي، سيتم استخراج السيرفرات الأصلية فقط.");
             }
 
             let customServersList = [];
             const channelCustomData = customServersMap[id_live];
 
-            // 3. بناء العناصر الخاصة بالجودات الخارجية بنفس النمط المطلوب
+            // 3. بناء العناصر الخاصة بالجودات الخارجية
             if (channelCustomData) {
                 const qualityOrder = ["1080p", "720p", "480p", "360p", "240p"];
                 
@@ -409,7 +431,6 @@ app.get("/stream", async (req, res) => {
                     sortedQualities.forEach((quality) => {
                         const rawUrl = channelCustomData[quality];
                         if (rawUrl && typeof rawUrl === "string" && rawUrl.trim() !== "") {
-                            // صياغة الـ url المشفرة ليتعرف عليها المشغل مع الهيدر المطلوب
                             const formattedUrl = JSON.stringify({
                                 "url": rawUrl.trim(),
                                 "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
@@ -421,7 +442,6 @@ app.get("/stream", async (req, res) => {
                             });
 
                             customServersList.push({
-                                rawQuality: quality,
                                 isCustom: true,
                                 urlPayload: formattedUrl
                             });
@@ -439,14 +459,13 @@ app.get("/stream", async (req, res) => {
                     });
 
                     customServersList.push({
-                        rawQuality: "1080p",
                         isCustom: true,
                         urlPayload: formattedUrl
                     });
                 }
             }
 
-            // 4. تصنيف السيرفرات الأصلية (الشغالة والفارغة)
+            // 4. تصنيف السيرفرات الأصلية (الفاعلة والفارغة)
             let validOriginal = [];
             let emptyOriginal = [];
 
@@ -461,16 +480,15 @@ app.get("/stream", async (req, res) => {
                 }
             });
 
-            // 5. الدمج وإعادة الترقيم الترتيبي التراكمي (سيرفر 1، سيرفر 2، ...)
+            // 5. الدمج الكامل وإعادة الترقيم
             const mergedRaw = [...customServersList, ...validOriginal, ...emptyOriginal];
             let globalCounter = 1;
 
-            const finalArray = mergedRaw.map((item) => {
+            return mergedRaw.map((item) => {
                 const serverName = `سيرفر ${globalCounter}`;
                 globalCounter++;
 
                 if (item.isCustom) {
-                    // السيرفر الخارجي المضاف
                     return {
                         "result": 0,
                         "message": {
@@ -485,7 +503,6 @@ app.get("/stream", async (req, res) => {
                         }
                     };
                 } else {
-                    // السيرفرات القادمة من الـ API الأساسي (مع الحفاظ على الـ url الحقيقي لها)
                     const existingUrl = item?.data?.url || item?.url || "2";
                     const existingAgent = item?.data?.agent || item?.agent || "shai";
 
@@ -504,8 +521,6 @@ app.get("/stream", async (req, res) => {
                     };
                 }
             });
-
-            return finalArray;
         }, STREAM_CACHE_TTL);
 
         res.json(data);
