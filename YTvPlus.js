@@ -803,24 +803,112 @@ function getChannelName(channelRaw) {
 }
 
 // ==========================================
-// 🆕 مسار المبارايات المُعدل والمحسن (/mach)
+// 🆕 1. القاموس والدوال المساعدة الجديدة
+// ==========================================
+const CHANNEL_MAP = {
+    "live_tv_beinsport2": "beIN Sports 2",
+    "live_tv_beinsport1": "beIN Sports 1",
+    "live_tv_beinsport3": "beIN Sports 3",
+    "live_tv_beinsport4": "beIN Sports 4",
+    "live_tv_beinsport5": "beIN Sports 5",
+    "live_tv_beinsport6": "beIN Sports 6",
+    "live_tv_beinsport7": "beIN Sports 7",
+    "live_tv_beinsport_news": "beIN Sports الإخبارية",
+    "live_tv_ssc1": "SSC 1",
+    "live_tv_ssc2": "SSC 2",
+    "live_tv_ssc3": "SSC 3",
+    "live_tv_ssc_news": "SSC News"
+};
+
+async function fetchChannelRealName(channelId) {
+    if (!channelId) return "غير معروفة";
+
+    if (CHANNEL_MAP[channelId]) {
+        return CHANNEL_MAP[channelId];
+    }
+
+    try {
+        const streamsPostData = {
+            "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", 
+            "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
+            "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", 
+            "device_type": "phone", "KEY_ACTIVATED_TYPE": "232425", "store": "direct", 
+            "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
+            "type": "tv", "id_live": channelId, "id": channelId, "live_id": channelId, "channel_id": channelId
+        };
+
+        const cacheKey = `channel_name_${channelId}`;
+        return await fetchWithCache(cacheKey, async () => {
+            const encryptedStreamBody = encryptAES(JSON.stringify(streamsPostData));
+            const streamRes = await axios.post("http://live.1spbgmu.com/api/live/livedrama/v13.0.0/getLiveAllStreamsById", encryptedStreamBody, {
+                headers: { 
+                    "Content-Type": "text/plain", 
+                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", 
+                    "Host": "live.1spbgmu.com", 
+                    "Connection": "Keep-Alive" 
+                },
+                responseType: "arraybuffer", 
+                timeout: 5000
+            });
+
+            const decryptedStreamRes = decryptAES(Buffer.from(streamRes.data).toString("utf-8"));
+            const streamJson = JSON.parse(decryptedStreamRes);
+            
+            const channelName = streamJson.live?.name || streamJson.name;
+
+            if (channelName && !channelName.includes("PANEL")) {
+                return channelName.trim();
+            }
+
+            return channelId.replace(/^live_tv_/i, "").replace(/_/g, " ").toUpperCase();
+        });
+    } catch (e) {
+        return channelId.replace(/^live_tv_/i, "").replace(/_/g, " ").toUpperCase();
+    }
+}
+
+function parseCleanScore(score1, score2) {
+    if (score1 === undefined || score1 === null || score1 === "" || score1 === "-") {
+        return "";
+    }
+
+    const clean1 = score1.toString().replace(/[^0-9]/g, "");
+    const clean2 = score2 ? score2.toString().replace(/[^0-9]/g, "") : "0";
+
+    if (clean1 !== "") {
+        return `${clean1} - ${clean2}`;
+    }
+
+    return "";
+}
+
+// ==========================================
+// 🆕 2. مسار المباريات الجديد بديل القديم (/mach)
 // ==========================================
 app.get("/mach", async (req, res) => {
     try {
-        const cacheKey = `matches_data`;
+        const cacheKey = `matches_data_v2`;
         
         const data = await fetchWithCache(cacheKey, async () => {
             const postData = {
-                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
-                "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", "device_type": "phone",
-                "KEY_ACTIVATED_TYPE": "232425", "store": "direct", "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
+                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", 
+                "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
+                "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", 
+                "device_type": "phone", "KEY_ACTIVATED_TYPE": "232425", "store": "direct", 
+                "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
                 "type": "tv"
             };
 
             const encryptedBody = encryptAES(JSON.stringify(postData));
             const response = await axios.post("http://sport.1spbgmu.com/sport/getMatches", encryptedBody, {
-                headers: { "Content-Type": "text/plain", "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", "Host": "sport.1spbgmu.com", "Connection": "Keep-Alive" },
-                timeout: 30000, responseType: "arraybuffer"
+                headers: { 
+                    "Content-Type": "text/plain", 
+                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", 
+                    "Host": "sport.1spbgmu.com", 
+                    "Connection": "Keep-Alive" 
+                },
+                timeout: 30000, 
+                responseType: "arraybuffer"
             });
 
             const encryptedResponse = Buffer.from(response.data).toString("utf-8");
@@ -829,16 +917,14 @@ app.get("/mach", async (req, res) => {
 
             let rawMatches = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.matches || jsonResponse.data || []);
 
-            return rawMatches.map(match => {
+            return await Promise.all(rawMatches.map(async (match) => {
                 let matchTime = ""; 
                 let matchStatus = "لم تبدأ بعد"; 
                 let dateVal = match.date || "";
                 
-                // تحديد وقت وتوقيت المباراة
                 const timeMatch = dateVal.match(/\d{2}:\d{2}/);
                 if (timeMatch) matchTime = timeMatch[0]; else matchTime = dateVal;
 
-                // 1. تحديد حالة المباراة بشكل صحيح وتلقائي (status)
                 const rawStatus = (match.status || "").toString().trim();
                 if (dateVal.includes("انتهت") || rawStatus.includes("انتهت") || rawStatus.includes("FINISHED")) {
                     matchStatus = "انتهت";
@@ -855,15 +941,9 @@ app.get("/mach", async (req, res) => {
                     matchStatus = "لم تبدأ بعد";
                 }
 
-                // تجهيز النتيجة
-                let finalScore = "";
-                if (match.firstTeamScore && match.firstTeamScore !== "-") {
-                    finalScore = `${match.firstTeamScore}-${match.secondtTeamScore || '0'}`;
-                }
-
-                // 2. استخراج اسم القناة الحقيقي وليس الـ id
+                const finalScore = parseCleanScore(match.firstTeamScore, match.secondtTeamScore);
                 const rawChannelId = match.channel || "";
-                const actualChannelName = getChannelName(rawChannelId);
+                const actualChannelName = await fetchChannelRealName(rawChannelId);
 
                 return {
                     title: match.title || `${match.firstTeam || ''} x ${match.secondtTeam || ''}`, 
@@ -876,14 +956,16 @@ app.get("/mach", async (req, res) => {
                     date: dateVal, 
                     status: matchStatus, 
                     score: finalScore, 
-                    channel: actualChannelName, // اسم القناة الأصلية المترجمة/المنظفة
-                    id_live: rawChannelId       // حفظ الـ ID لاستخدامه في تشغيل البث
+                    channel: actualChannelName, 
+                    id_live: rawChannelId
                 };
-            });
+            }));
         });
 
         res.json(data);
-    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
+    } catch (error) { 
+        res.status(500).json({ error: true, message: error.message }); 
+    }
 });
 
 app.all("/resolve", async (req, res) => {
