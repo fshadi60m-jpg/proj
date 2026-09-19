@@ -340,7 +340,7 @@ app.get("/stream", async (req, res) => {
             return res.status(400).json({ error: true, message: "يرجى تزويد id_live القناة" });
         }
 
-        const cacheKey = `stream_data_v3_${id_live}`;
+        const cacheKey = `stream_data_v4_${id_live}`;
         const STREAM_CACHE_TTL = 5 * 60 * 1000;
 
         const data = await fetchWithCache(cacheKey, async () => {
@@ -369,12 +369,14 @@ app.get("/stream", async (req, res) => {
             const decryptedStreamRes = decryptAES(Buffer.from(streamRes.data).toString("utf-8"));
             const streamJson = JSON.parse(decryptedStreamRes);
 
-            // استخراج قائمة السيرفرات المتاحة أصلياً من الاستجابة
+            // استخراج قائمة السيرفرات الأصلية
             let originalServers = [];
-            if (Array.isArray(streamJson.servers)) {
-                originalServers = streamJson.servers;
+            if (Array.isArray(streamJson)) {
+                originalServers = streamJson;
             } else if (streamJson.live && Array.isArray(streamJson.live.servers)) {
                 originalServers = streamJson.live.servers;
+            } else if (Array.isArray(streamJson.servers)) {
+                originalServers = streamJson.servers;
             } else if (Array.isArray(streamJson.data)) {
                 originalServers = streamJson.data;
             }
@@ -391,11 +393,10 @@ app.get("/stream", async (req, res) => {
             let customServersList = [];
             const channelCustomData = customServersMap[id_live];
 
-            // 3. معالجة وتجهيز السيرفرات الخارجية للجودات
+            // 3. بناء العناصر الخاصة بالجودات الخارجية بنفس النمط المطلوب
             if (channelCustomData) {
                 const qualityOrder = ["1080p", "720p", "480p", "360p", "240p"];
-                let serverCounter = 1;
-
+                
                 if (typeof channelCustomData === "object" && !Array.isArray(channelCustomData)) {
                     const sortedQualities = Object.keys(channelCustomData).sort((a, b) => {
                         let idxA = qualityOrder.indexOf(a.toLowerCase());
@@ -406,38 +407,46 @@ app.get("/stream", async (req, res) => {
                     });
 
                     sortedQualities.forEach((quality) => {
-                        const streamUrl = channelCustomData[quality];
-                        if (streamUrl && typeof streamUrl === "string" && streamUrl.trim() !== "") {
-                            const serverName = `سيرفر ${serverCounter} (${quality})`;
-                            customServersList.push({
-                                name: serverName,
-                                url: streamUrl,
-                                agent: "TDMuaEG",
-                                data: {
-                                    url: streamUrl,
-                                    agent: "TDMuaEG",
-                                    name: serverName
+                        const rawUrl = channelCustomData[quality];
+                        if (rawUrl && typeof rawUrl === "string" && rawUrl.trim() !== "") {
+                            // صياغة الـ url المشفرة ليتعرف عليها المشغل مع الهيدر المطلوب
+                            const formattedUrl = JSON.stringify({
+                                "url": rawUrl.trim(),
+                                "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+                                "acceptSSL": "1",
+                                "mediatype": "hls",
+                                "headers": {
+                                    "User-Agent": "TDMuaEG"
                                 }
                             });
-                            serverCounter++;
+
+                            customServersList.push({
+                                rawQuality: quality,
+                                isCustom: true,
+                                urlPayload: formattedUrl
+                            });
                         }
                     });
                 } else if (typeof channelCustomData === "string" && channelCustomData.trim() !== "") {
-                    const serverName = "سيرفر 1";
-                    customServersList.push({
-                        name: serverName,
-                        url: channelCustomData,
-                        agent: "TDMuaEG",
-                        data: {
-                            url: channelCustomData,
-                            agent: "TDMuaEG",
-                            name: serverName
+                    const formattedUrl = JSON.stringify({
+                        "url": channelCustomData.trim(),
+                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+                        "acceptSSL": "1",
+                        "mediatype": "hls",
+                        "headers": {
+                            "User-Agent": "TDMuaEG"
                         }
+                    });
+
+                    customServersList.push({
+                        rawQuality: "1080p",
+                        isCustom: true,
+                        urlPayload: formattedUrl
                     });
                 }
             }
 
-            // 4. فرز السيرفرات الأصلية لترتيب الفارغ في النهاية
+            // 4. تصنيف السيرفرات الأصلية (الشغالة والفارغة)
             let validOriginal = [];
             let emptyOriginal = [];
 
@@ -446,34 +455,57 @@ app.get("/stream", async (req, res) => {
                 const isEmpty = !urlVal || urlVal.trim() === "" || urlVal.trim().length <= 2;
 
                 if (isEmpty) {
-                    let sName = server.name || server?.data?.name || "سيرفر غير معنون";
-                    if (!sName.includes("(فارغ)")) {
-                        sName = `${sName} (فارغ)`;
-                    }
-
-                    emptyOriginal.push({
-                        ...server,
-                        name: sName,
-                        data: {
-                            ...(server.data || {}),
-                            name: sName
-                        }
-                    });
+                    emptyOriginal.push(server);
                 } else {
                     validOriginal.push(server);
                 }
             });
 
-            // 5. الدمج النهائي بالتنسيق: (سيرفرات الجودات الخارجية -> السيرفرات الأصلية الفعالة -> السيرفرات الأصلية الفارغة)
-            const allServers = [...customServersList, ...validOriginal, ...emptyOriginal];
+            // 5. الدمج وإعادة الترقيم الترتيبي التراكمي (سيرفر 1، سيرفر 2، ...)
+            const mergedRaw = [...customServersList, ...validOriginal, ...emptyOriginal];
+            let globalCounter = 1;
 
-            // إعادة بناء الاستجابة بحيث تصبح البنية متناسقة ونظيفة
-            if (streamJson.live) {
-                streamJson.live.servers = allServers;
-            }
-            streamJson.servers = allServers;
+            const finalArray = mergedRaw.map((item) => {
+                const serverName = `سيرفر ${globalCounter}`;
+                globalCounter++;
 
-            return streamJson;
+                if (item.isCustom) {
+                    // السيرفر الخارجي المضاف
+                    return {
+                        "result": 0,
+                        "message": {
+                            "en": "operation succeeded",
+                            "ar": "تمت العملية بنجاح"
+                        },
+                        "name": serverName,
+                        "data": {
+                            "name": serverName,
+                            "url": item.urlPayload,
+                            "agent": "advanced"
+                        }
+                    };
+                } else {
+                    // السيرفرات القادمة من الـ API الأساسي (مع الحفاظ على الـ url الحقيقي لها)
+                    const existingUrl = item?.data?.url || item?.url || "2";
+                    const existingAgent = item?.data?.agent || item?.agent || "shai";
+
+                    return {
+                        "result": item.result !== undefined ? item.result : 0,
+                        "message": item.message || {
+                            "en": "operation succeeded",
+                            "ar": "تمت العملية بنجاح"
+                        },
+                        "data": {
+                            "url": existingUrl,
+                            "agent": existingAgent,
+                            "name": serverName
+                        },
+                        "name": serverName
+                    };
+                }
+            });
+
+            return finalArray;
         }, STREAM_CACHE_TTL);
 
         res.json(data);
@@ -481,7 +513,6 @@ app.get("/stream", async (req, res) => {
         res.status(500).json({ error: true, message: error.message });
     }
 });
-
 
 app.get('/', (req, res) => {
   res.json([]);
