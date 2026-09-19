@@ -284,50 +284,21 @@ async function fetchChannelsByTopic(topic) {
 }
 
 // ==========================================
-// 📺 مسار القنوات مع كاش طويل (24 ساعة)
+// 1. مسار جلب القنوات (مع الكاش الذكي 10 دقائق)
 // ==========================================
 app.get("/channels", async (req, res) => {
     try {
-        const cacheKey = `all_channels_data_v1`;
-        // 24 ساعة بالملي ثانية = 24 * 60 * 60 * 1000
-        const CACHE_TTL = 24 * 60 * 60 * 1000; 
-
-        // إمكانية إجبار السيرفر على تحديث الكاش عند كتابة: /channels?refresh=true
-        const forceRefresh = req.query.refresh === "true";
-
-        const data = await fetchWithCache(cacheKey, async () => {
-            const postData = {
-                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3",
-                "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
-                "device_api": "28", "version_name": "187", "language": "ar", 
-                "timezone": "Europe/Istanbul", "device_type": "phone",
-                "KEY_ACTIVATED_TYPE": "232425", "store": "direct",
-                "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
-                "type": "tv"
-            };
-
-            const encryptedBody = encryptAES(JSON.stringify(postData));
-            const response = await axios.post("http://live.1spbgmu.com/api/live/livedrama/v13.0.0/getLiveAllCategoriesWithLiveToLive", encryptedBody, {
-                headers: {
-                    "Content-Type": "text/plain",
-                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)",
-                    "Host": "live.1spbgmu.com",
-                    "Connection": "Keep-Alive"
-                },
-                timeout: 30000,
-                responseType: "arraybuffer"
-            });
-
-            const encryptedResponse = Buffer.from(response.data).toString("utf-8");
-            const decryptedResponse = decryptAES(encryptedResponse);
-            return JSON.parse(decryptedResponse);
-        }, CACHE_TTL, forceRefresh); // تمرير وقت الكاش وخيار التحديث الإجباري
-
+        const topic = req.query.topic || "arabic_sport";
+        const cacheKey = `channels_${topic}`;
+        const data = await fetchWithCache(cacheKey, () => fetchChannelsByTopic(topic));
         res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: true, message: error.message });
-    }
+    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
+
+const DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36";
+
+
+
 
 
 
@@ -560,12 +531,14 @@ app.get("/stream", async (req, res) => {
 
 
 
+
+
 app.get('/', (req, res) => {
   res.json([]);
 });
 
 // ==========================================
-// 🔍 مسار البحث عن القنوات في جميع التصنيفات
+// 🔍 مسار البحث عن القنوات في جميع التصنيفات (مُحسّن لمعالجة الـ CPU)
 // ==========================================
 
 function chunkArray(array, size) {
@@ -580,6 +553,7 @@ app.get("/search", async (req, res) => {
     try {
         const query = req.query.q ? req.query.q.trim() : "";
         
+        // إذا كان البحث فارغاً، يتم استدعاء "قسم واحد فقط" (الأكثر مشاهدة) لتوفير الضغط الهائل
         if (!query) {
             const firstTopic = allTopics[0].id_topic; 
             const data = await fetchWithCache(`channels_${firstTopic}`, () => fetchChannelsByTopic(firstTopic));
@@ -861,71 +835,6 @@ app.get("/last/:id_live", async (req, res) => {
 });
 
 // ==========================================
-// 1. قاموس المعرفات والدوال المساعدة للجلب
-// ==========================================
-const MATCH_CHANNEL_MAP = {
-    "live_tv_beinsport2": "beIN Sports 2",
-    "live_tv_beinsport1": "beIN Sports 1",
-    "live_tv_beinsport3": "beIN Sports 3",
-    "live_tv_beinsport4": "beIN Sports 4",
-    "live_tv_beinsport5": "beIN Sports 5",
-    "live_tv_beinsport6": "beIN Sports 6",
-    "live_tv_beinsport7": "beIN Sports 7",
-    "live_tv_beinsport_news": "beIN Sports الإخبارية",
-    "live_tv_ssc1": "SSC 1",
-    "live_tv_ssc2": "SSC 2",
-    "live_tv_ssc3": "SSC 3",
-    "live_tv_ssc_news": "SSC News"
-};
-
-async function fetchChannelRealName(channelId) {
-    if (!channelId) return "غير معروفة";
-
-    if (MATCH_CHANNEL_MAP[channelId]) {
-        return MATCH_CHANNEL_MAP[channelId];
-    }
-
-    try {
-        const streamsPostData = {
-            "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", 
-            "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
-            "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", 
-            "device_type": "phone", "KEY_ACTIVATED_TYPE": "232425", "store": "direct", 
-            "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
-            "type": "tv", "id_live": channelId, "id": channelId, "live_id": channelId, "channel_id": channelId
-        };
-
-        const cacheKey = `channel_name_${channelId}`;
-        return await fetchWithCache(cacheKey, async () => {
-            const encryptedStreamBody = encryptAES(JSON.stringify(streamsPostData));
-            const streamRes = await axios.post("http://live.1spbgmu.com/api/live/livedrama/v13.0.0/getLiveAllStreamsById", encryptedStreamBody, {
-                headers: { 
-                    "Content-Type": "text/plain", 
-                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", 
-                    "Host": "live.1spbgmu.com", 
-                    "Connection": "Keep-Alive" 
-                },
-                responseType: "arraybuffer", 
-                timeout: 5000
-            });
-
-            const decryptedStreamRes = decryptAES(Buffer.from(streamRes.data).toString("utf-8"));
-            const streamJson = JSON.parse(decryptedStreamRes);
-            
-            const channelName = streamJson.live?.name || streamJson.name;
-
-            if (channelName && !channelName.includes("PANEL")) {
-                return channelName.trim();
-            }
-
-            return channelId.replace(/^live_tv_/i, "").replace(/_/g, " ").toUpperCase();
-        });
-    } catch (e) {
-        return channelId.replace(/^live_tv_/i, "").replace(/_/g, " ").toUpperCase();
-    }
-}
-
-// ==========================================
 // 2. مسار المباريات (/mach)
 // ==========================================
 app.get("/mach", async (req, res) => {
@@ -1032,33 +941,88 @@ app.get('/extract', async (req, res) => {
 });
 
 const allTopics = [
+    // الأكثر مشاهدة - الأكثر طلباً
     {"id_topic":"hot_now","name_topic":"الأكثر مشاهدة","img_url_topic":"http://logo.twoapistack.work/img/topics/hot_now.png","code":""},
+    
+    // مباريات مباشرة
     {"id_topic":"live_matches","name_topic":"مباريات مباشرة","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_fire.jpg","code":""},
+    
+    // قنوات بي إن سبورت
     {"id_topic":"bein_sport","name_topic":"بي ان سبورت","img_url_topic":"http://logo.twoapistack.work/img/topics/bein_sport.png","code":""},
+    
+    // قنوات بي إن ترفيه
     {"id_topic":"bein_entir","name_topic":"بي ان ترفيه","img_url_topic":"http://logo.twoapistack.work/img/topics/bein_enter.jpg","code":""},
+    
+    // شاهد
     {"id_topic":"shahid","name_topic":"شاهد","img_url_topic":"http://logo.twoapistack.work/img/topics/shahid.jpg","code":""},
+    
+    // ألوان
     {"id_topic":"alwan","name_topic":"الوان","img_url_topic":"http://logo.twoapistack.work/img/topics/alwan.jpg","code":""},
+    
+    // روتانا
     {"id_topic":"rotana","name_topic":"روتانا","img_url_topic":"http://logo.twoapistack.work/img/topics/rotana.jpg","code":""},
+    
+    // MBC
     {"id_topic":"mbc","name_topic":"MBC","img_url_topic":"http://logo.twoapistack.work/img/topics/mpc.jpg","code":""},
+    
+    // OSN
     {"id_topic":"osn","name_topic":"OSN","img_url_topic":"http://logo.twoapistack.work/img/topics/osn_logo.png","code":""},
+    
+    // ART
     {"id_topic":"art","name_topic":"ART","img_url_topic":"http://logo.twoapistack.work/img/topics/art.png","code":""},
+    
+    // NETFLIX
     {"id_topic":"netflix","name_topic":"NETFLIX","img_url_topic":"http://logo.twoapistack.work/img/topics/netflix.jpg","code":""},
+    
+    // وياك
     {"id_topic":"weyyak","name_topic":"وياك","img_url_topic":"http://logo.twoapistack.work/img/topics/weyyak.jpg","code":""},
+    
+    // رؤيا
     {"id_topic":"roya","name_topic":"رؤيا","img_url_topic":"https://backend.roya-tv.com/imagechanger/Size01Q40R11/images/channels/iMoPuU3u5qnqMsL.png","code":""},
+    
+    // رياضة
     {"id_topic":"arabic_sport","name_topic":"رياضة","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_basketball_red.png","code":""},
+    
+    // ترفيه عربي
     {"id_topic":"ar_1","name_topic":"ترفيه عربي","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_featured_ar.png","code":""},
+    
+    // أخبار
     {"id_topic":"ar_2","name_topic":"أخبار","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_newspaper.png","code":""},
+    
+    // أفلام
     {"id_topic":"ar_7","name_topic":"أفلام","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_film.png","code":""},
+    
+    // أطفال
     {"id_topic":"ar_3","name_topic":"أطفال","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_kids.jpg","code":""},
+    
+    // وثائقي
     {"id_topic":"ar_5","name_topic":"وثائقي","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_documantry.png","code":""},
+    
+    // ديني
     {"id_topic":"ar_6","name_topic":"ديني","img_url_topic":"http://logo.twoapistack.work/img/topics/ic__mosque.png","code":""},
+    
+    // موسيقى
     {"id_topic":"ar_8","name_topic":"موسيقى","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_music.jpg","code":""},
+    
+    // الطبخ
     {"id_topic":"cook","name_topic":"الطبخ","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_chef.png","code":""},
+    
+    // علوم
     {"id_topic":"science","name_topic":"علوم","img_url_topic":"http://logo.twoapistack.work/img/topics/science.png","code":""},
+    
+    // انيمي
     {"id_topic":"anime","name_topic":"انيمي","img_url_topic":"http://logo.twoapistack.work/img/topics/anime.jpg","code":""},
+    
+    // ريلاكس
     {"id_topic":"relax","name_topic":"ريلاكس","img_url_topic":"http://logo.twoapistack.work/img/topics/relax.png","code":""},
+    
+    // Live Twitch
     {"id_topic":"twitch","name_topic":"Live Twitch","img_url_topic":"http://logo.twoapistack.work/img/topics/twitch.png","code":""},
+    
+    // unsorted
     {"id_topic":"unsorted","name_topic":"unsorted","img_url_topic":"","code":""},
+    
+    // الدول العربية
     {"id_topic":"963","name_topic":"سوريا","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_sy.png","code":"sy"},
     {"id_topic":"961","name_topic":"لبنان","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_lb.png","code":"lb"},
     {"id_topic":"966","name_topic":"السعودية","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_sa.png","code":"sa"},
@@ -1077,8 +1041,47 @@ const allTopics = [
     {"id_topic":"212","name_topic":"المغرب","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ma.png","code":"ma"},
     {"id_topic":"213","name_topic":"الجزائر","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_dz.png","code":"dz"},
     {"id_topic":"218","name_topic":"ليبيا","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ly.png","code":"ly"},
-    {"id_topic":"252","name_topic":"الصومال","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_so.png","code":"so"}
+    {"id_topic":"252","name_topic":"الصومال","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_so.png","code":"so"},
+    
+    // الدول الأجنبية (حسب الأهمية)
+    {"id_topic":"355","name_topic":"Albania","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_al.png","code":"al"},
+    {"id_topic":"93","name_topic":"Afghanistan","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_af.png","code":"af"},
+    {"id_topic":"376","name_topic":"Andorra","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ad.png","code":"ad"},
+    {"id_topic":"54","name_topic":"Argentina","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ar.png","code":"ar"},
+    {"id_topic":"374","name_topic":"Armenia","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_am.png","code":"am"},
+    {"id_topic":"297","name_topic":"Aruba","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_aw.png","code":"aw"},
+    {"id_topic":"61","name_topic":"Australia","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_au.png","code":"au"},
+    {"id_topic":"az","name_topic":"Azerbaijan","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_az.png","code":"az"},
+    {"id_topic":"bs","name_topic":"Bahamas","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bs.png","code":"bs"},
+    {"id_topic":"bd","name_topic":"Bangladesh","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bd.png","code":"bd"},
+    {"id_topic":"bb","name_topic":"Barbados","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bb.png","code":"bb"},
+    {"id_topic":"by","name_topic":"Belarus","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_by.png","code":"by"},
+    {"id_topic":"0_be_0","name_topic":"Belgium","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_be.png","code":"be"},
+    {"id_topic":"bz","name_topic":"Belize","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bz.png","code":"bz"},
+    {"id_topic":"bj","name_topic":"Benin","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bj.png","code":"bj"},
+    {"id_topic":"bm","name_topic":"Bermuda","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bm.png","code":"bm"},
+    {"id_topic":"bt","name_topic":"Bhutan","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bt.png","code":"bt"},
+    {"id_topic":"bo","name_topic":"Bolivia","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bo.png","code":"bo"},
+    {"id_topic":"ba","name_topic":"Bosnia And Herzegovina","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ba.png","code":"ba"},
+    {"id_topic":"bw","name_topic":"Botswana","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bw.png","code":"bw"},
+    {"id_topic":"bv","name_topic":"Bouvet Island","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bv.png","code":"bv"},
+    {"id_topic":"br","name_topic":"Brazil","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_br.png","code":"br"},
+    {"id_topic":"io","name_topic":"British Indian Ocean Territory","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_io.png","code":"io"},
+    {"id_topic":"bn","name_topic":"Brunei Darussalam","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bn.png","code":"bn"},
+    {"id_topic":"bg","name_topic":"Bulgaria","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bg.png","code":"bg"},
+    {"id_topic":"bf","name_topic":"Burkina Faso","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bf.png","code":"bf"},
+    {"id_topic":"0_bi_0","name_topic":"Burundi","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_bi.png","code":"bi"},
+    {"id_topic":"kh","name_topic":"Cambodia","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_kh.png","code":"kh"},
+    {"id_topic":"cm","name_topic":"Cameroon","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cm.png","code":"cm"},
+    {"id_topic":"ca","name_topic":"Canada","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ca.png","code":"ca"},
+    {"id_topic":"cv","name_topic":"Cape Verde","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cv.png","code":"cv"},
+    {"id_topic":"ky","name_topic":"Cayman Islands","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_ky.png","code":"ky"},
+    {"id_topic":"cf","name_topic":"Central African Republic","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cf.png","code":"cf"},
+    {"id_topic":"td","name_topic":"Chad","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_td.png","code":"td"},
+    {"id_topic":"cl","name_topic":"Chile","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cl.png","code":"cl"},
+    {"id_topic":"cn","name_topic":"China","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_flag_cn.png","code":"cn"}
 ];
+
 
 app.get("/get-all-topics", (req, res) => { res.json(allTopics); });
 
