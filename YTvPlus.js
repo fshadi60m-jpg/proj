@@ -300,8 +300,6 @@ const DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
 
 
 
-
-
 // تعريف المتغير الافتراضي لـ User-Agent
 const DEFAULT_USER_AGENT = "TDMuaEG";
 
@@ -525,6 +523,16 @@ app.get("/stream", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -834,36 +842,22 @@ app.get("/last/:id_live", async (req, res) => {
     } catch (error) { res.status(error.message.includes("لم يتم العثور") ? 404 : 500).json({ error: true, message: error.message }); }
 });
 
-
-
-
-// ==========================================
-// 2. مسار المباريات (/mach)
-// ==========================================
 app.get("/mach", async (req, res) => {
     try {
-        const cacheKey = `matches_data_v2`;
+        const cacheKey = `matches_data`;
         
         const data = await fetchWithCache(cacheKey, async () => {
             const postData = {
-                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", 
-                "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
-                "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", 
-                "device_type": "phone", "KEY_ACTIVATED_TYPE": "232425", "store": "direct", 
-                "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
+                "user_id": "_82668_1785761367217_notloggedin.com_dramalive3", "device_id": "e603540e-ed93-47a3-bec6-a15f7f056604",
+                "device_api": "28", "version_name": "187", "language": "ar", "timezone": "Europe/Istanbul", "device_type": "phone",
+                "KEY_ACTIVATED_TYPE": "232425", "store": "direct", "mainServer": "http://main.eastgoessouth.online/api/live/livedrama/v13.0.0/",
                 "type": "tv"
             };
 
             const encryptedBody = encryptAES(JSON.stringify(postData));
             const response = await axios.post("http://sport.1spbgmu.com/sport/getMatches", encryptedBody, {
-                headers: { 
-                    "Content-Type": "text/plain", 
-                    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", 
-                    "Host": "sport.1spbgmu.com", 
-                    "Connection": "Keep-Alive" 
-                },
-                timeout: 30000, 
-                responseType: "arraybuffer"
+                headers: { "Content-Type": "text/plain", "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; SM-S908E Build/TP1A.220624.014)", "Host": "sport.1spbgmu.com", "Connection": "Keep-Alive" },
+                timeout: 30000, responseType: "arraybuffer"
             });
 
             const encryptedResponse = Buffer.from(response.data).toString("utf-8");
@@ -872,60 +866,29 @@ app.get("/mach", async (req, res) => {
 
             let rawMatches = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.matches || jsonResponse.data || []);
 
-            return await Promise.all(rawMatches.map(async (match) => {
-                let matchTime = ""; 
-                let matchStatus = "لم تبدأ بعد"; 
-                let dateVal = match.date || "";
+            return rawMatches.map(match => {
+                let matchTime = ""; let matchStatus = "لم تبدأ"; let dateVal = match.date || "";
                 
-                const timeMatch = dateVal.match(/\d{2}:\d{2}/);
-                if (timeMatch) matchTime = timeMatch[0]; else matchTime = dateVal;
-
-                const rawStatus = (match.status || "").toString().trim();
-                if (dateVal.includes("انتهت") || rawStatus.includes("انتهت") || rawStatus.includes("FINISHED")) {
-                    matchStatus = "انتهت";
-                    matchTime = "انتهت";
-                } else if (
-                    dateVal.includes("جارية") || 
-                    rawStatus.includes("جارية") || 
-                    rawStatus.includes("LIVE") || 
-                    rawStatus.includes("جاري") ||
-                    (match.firstTeamScore && match.firstTeamScore !== "-" && !dateVal.includes("انتهت"))
-                ) {
-                    matchStatus = "جارية حالياً";
-                } else {
-                    matchStatus = "لم تبدأ بعد";
+                if (dateVal.includes("انتهت")) { matchStatus = "انتهت"; matchTime = "انتهت"; } 
+                else {
+                    const timeMatch = dateVal.match(/\d{2}:\d{2}/);
+                    if (timeMatch) matchTime = timeMatch[0]; else matchTime = dateVal;
                 }
 
-                // طباعة النتيجة كما هي قادمة من السيرفر تماماً
-                const rawScore = match.score || match.firstTeamScore || "";
-                const rawChannelId = match.channel || "";
-                const actualChannelName = await fetchChannelRealName(rawChannelId);
+                let finalScore = "";
+                if (match.firstTeamScore && match.firstTeamScore !== "-") finalScore = match.firstTeamScore;
 
                 return {
-                    title: match.title || `${match.firstTeam || ''} x ${match.secondtTeam || ''}`, 
-                    league: match.topic || "", 
-                    team1: match.firstTeam || "", 
-                    team2: match.secondtTeam || "",
-                    team1_logo: match.firstTeamImage || "", 
-                    team2_logo: match.secondtTeamImage || "", 
-                    time: matchTime,
-                    date: dateVal, 
-                    status: matchStatus, 
-                    score: rawScore, 
-                    channel: actualChannelName, 
-                    id_live: rawChannelId
+                    title: match.title || "", league: match.topic || "", team1: match.firstTeam || "", team2: match.secondtTeam || "",
+                    team1_logo: match.firstTeamImage || "", team2_logo: match.secondtTeamImage || "", time: matchTime,
+                    date: dateVal, status: matchStatus, score: finalScore, channel: match.channel || "", id_live: match.channel || ""
                 };
-            }));
+            });
         });
 
         res.json(data);
-    } catch (error) { 
-        res.status(500).json({ error: true, message: error.message }); 
-    }
+    } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
-
-
-
 
 app.all("/resolve", async (req, res) => {
     try {
@@ -959,7 +922,8 @@ const allTopics = [
     // الأكثر مشاهدة - الأكثر طلباً
     {"id_topic":"hot_now","name_topic":"الأكثر مشاهدة","img_url_topic":"http://logo.twoapistack.work/img/topics/hot_now.png","code":""},
     
-    
+    // مباريات مباشرة
+    {"id_topic":"live_matches","name_topic":"مباريات مباشرة","img_url_topic":"http://logo.twoapistack.work/img/topics/ic_fire.jpg","code":""},
     
     // قنوات بي إن سبورت
     {"id_topic":"bein_sport","name_topic":"بي ان سبورت","img_url_topic":"http://logo.twoapistack.work/img/topics/bein_sport.png","code":""},
