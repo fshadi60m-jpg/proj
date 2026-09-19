@@ -387,7 +387,7 @@ function getFormattedRequestsCount(channelId) {
 
 
 // =========================================================
-// 2. مسار /stream الجاهز والمعدّل بالكامل
+// مسار /stream الجاهز
 // =========================================================
 
 app.get("/stream", async (req, res) => {
@@ -395,7 +395,7 @@ app.get("/stream", async (req, res) => {
         const id_live = req.query.id_live;
         if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id_live" });
 
-        // تسجيل الطلب فوراً للقناة الحالية
+        // تسجيل الطلب فوراً للقناة الحالية (الدالة معرفة مسبقاً في الأعلى)
         recordChannelRequest(id_live);
 
         const cacheKey = `stream_full_array_${id_live}`;
@@ -607,7 +607,7 @@ app.get("/stream", async (req, res) => {
             return finalStreamsArray;
         });
 
-        // إرجاع النتيجة مع حقل عدد الطلبات
+        // إرجاع النتيجة
         res.json({
             id_live: id_live,
             requests_last_minute: getFormattedRequestsCount(id_live),
