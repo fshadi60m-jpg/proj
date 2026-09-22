@@ -299,7 +299,7 @@ app.get("/channels", async (req, res) => {
 
 
 // تعريف المتغير الافتراضي لـ User-Agent
-const DEFAULT_USER_AGENT = "TDMuaEG";
+const DEFAULT_USER_AGENT = "TDMuaNEW";
 
 app.get("/stream", async (req, res) => {
     try {
