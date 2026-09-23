@@ -1,56 +1,56 @@
 {
   "live_tv_beinsport1": {
-    "1080p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1319.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1316.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1313.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1427.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport2": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1328.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1325.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1322.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1430.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport3": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1337.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1334.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1331.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1433.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport4": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1346.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1343.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1340.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1448.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport5": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1355.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1352.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1349.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1451.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport6": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1364.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1361.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1358.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1556.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport7": {
-    "1080p": "https://watch.ozcartv.xyz/assets/res2/java2/1373.css?x=/hls",
-    "720p": "https://watch.ozcartv.xyz/assets/res2/java2/1370.css?x=/hls",
-    "360p": "https://watch.ozcartv.xyz/assets/res2/java2/1367.css?x=/hls",
-    "240p": "https://watch.ozcartv.xyz/assets/res2/java2/1559.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport8": {
-    "1080p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1382.css?x=/hls",
-    "720p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1379.css?x=/hls",
-    "360p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1376.css?x=/hls",
-    "240p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1562.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   },
   "live_tv_beinsport9": {
-    "1080p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1391.css?x=/hls",
-    "720p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1388.css?x=/hls",
-    "360p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1385.css?x=/hls",
-    "240p": "https://still-dust-c9ae.manon-lol2000.workers.dev/assets/res2/java2/1565.css?x=/hls"
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   }
 }
