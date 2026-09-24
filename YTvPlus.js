@@ -296,10 +296,13 @@ app.get("/channels", async (req, res) => {
 });
 
 
-
-
-// تعريف المتغير الافتراضي لـ User-Agent
-const DEFAULT_USER_AGENT = "TDMuaNEW";
+// تعريف الهيدرز المخصصة لحقنها في سيرفرات ملف JSON
+const CUSTOM_HEADERS = {
+    "User-Agent": "OSCARTV2021",
+    "Accept-Encoding": "gzip",
+    "Host": "assets.pushyourcss.world:8080",
+    "Connection": "Keep-Alive"
+};
 
 app.get("/stream", async (req, res) => {
     try {
@@ -327,7 +330,7 @@ app.get("/stream", async (req, res) => {
 
             const targetCustomData = customUrls[id_live];
 
-            // 1. معالجة السيرفرات الخاصة من ملف JSON
+            // 1. معالجة السيرفرات الخاصة من ملف JSON وحقن الهيدرز الجديدة
             if (targetCustomData) {
                 if (typeof targetCustomData === "object" && !Array.isArray(targetCustomData)) {
                     for (const [quality, streamUrl] of Object.entries(targetCustomData)) {
@@ -339,10 +342,10 @@ app.get("/stream", async (req, res) => {
                                     "qualityLabel": quality,
                                     "url": JSON.stringify({
                                         "url": streamUrl.trim(),
-                                        "agent": DEFAULT_USER_AGENT,
+                                        "agent": CUSTOM_HEADERS["User-Agent"],
                                         "acceptSSL": "1",
                                         "mediatype": "hls",
-                                        "headers": { "User-Agent": DEFAULT_USER_AGENT }
+                                        "headers": CUSTOM_HEADERS
                                     }),
                                     "agent": "advanced"
                                 }
@@ -357,10 +360,10 @@ app.get("/stream", async (req, res) => {
                         "data": {
                             "url": JSON.stringify({
                                 "url": targetCustomData.trim(),
-                                "agent": DEFAULT_USER_AGENT,
+                                "agent": CUSTOM_HEADERS["User-Agent"],
                                 "acceptSSL": "1",
                                 "mediatype": "hls",
-                                "headers": { "User-Agent": DEFAULT_USER_AGENT }
+                                "headers": CUSTOM_HEADERS
                             }),
                             "agent": "advanced"
                         }
@@ -368,6 +371,7 @@ app.get("/stream", async (req, res) => {
                     activeStreams.push(customServerPayload);
                 }
             }
+
 
             // 2. جلب السيرفرات الأساسية من API الدراما
             const postData = {
