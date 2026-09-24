@@ -296,21 +296,14 @@ app.get("/channels", async (req, res) => {
 });
 
 
-// تعريف الهيدرز
-const CUSTOM_HEADERS = {
-    "User-Agent": "OSCARTV2021",
-    "Accept-Encoding": "gzip",
-    "Host": "assets.pushyourcss.world:8080",
-    "Connection": "Keep-Alive"
-};
+
 
 app.get("/stream", async (req, res) => {
     try {
         const id_live = req.query.id_live;
         if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id_live" });
 
-        // إلغاء الكاش مؤقتاً برقم جديد لضمان وصول التحديثات
-        const cacheKey = `stream_full_array_v3_${id_live}`;
+        const cacheKey = `stream_full_array_${id_live}`;
 
         const data = await fetchWithCache(cacheKey, async () => {
             let activeStreams = [];
@@ -318,10 +311,9 @@ app.get("/stream", async (req, res) => {
 
             let customUrls = {};
             try {
-                customUrls = await fetchWithCache("external_channels_json_v4", async () => {
-                    const response = await axios.get("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/chanTest.json", { 
-                        timeout: 5000,
-                        headers: { "Cache-Control": "no-cache" }
+                customUrls = await fetchWithCache("external_channels_json_v2", async () => {
+                    const response = await axios.get("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/Channals.json", { 
+                        timeout: 5000 
                     });
                     return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
                 });
@@ -332,27 +324,31 @@ app.get("/stream", async (req, res) => {
 
             const targetCustomData = customUrls[id_live];
 
-            // معالجة السيرفرات الخاصة من ملف JSON
+            // الهيدرات الجديدة الخاصة بـ OSCARTV2021 حسب الصورة
+            const customHeaders = {
+                "User-Agent": "OSCARTV2021",
+                "Accept-Encoding": "gzip",
+                "Host": "assets.pushyourcss.world:8080",
+                "Connection": "Keep-Alive"
+            };
+
+            // 1. معالجة السيرفرات الخاصة من ملف JSON
             if (targetCustomData) {
                 if (typeof targetCustomData === "object" && !Array.isArray(targetCustomData)) {
                     for (const [quality, streamUrl] of Object.entries(targetCustomData)) {
                         if (streamUrl && typeof streamUrl === "string" && streamUrl.trim() !== "") {
-                            
-                            // إعداد الـ url object بما يتوافق مع المشغل
-                            const streamConfig = {
-                                "url": streamUrl.trim(),
-                                "agent": "OSCARTV2021",
-                                "acceptSSL": "1",
-                                "mediatype": "hls",
-                                "headers": CUSTOM_HEADERS
-                            };
-
                             const customServerPayload = {
                                 "result": 0,
                                 "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
                                 "data": {
                                     "qualityLabel": quality,
-                                    "url": JSON.stringify(streamConfig),
+                                    "url": JSON.stringify({
+                                        "url": streamUrl.trim(),
+                                        "agent": "OSCARTV2021",
+                                        "acceptSSL": "1",
+                                        "mediatype": "hls",
+                                        "headers": customHeaders
+                                    }),
                                     "agent": "advanced"
                                 }
                             };
@@ -360,35 +356,23 @@ app.get("/stream", async (req, res) => {
                         }
                     }
                 } else if (typeof targetCustomData === "string" && targetCustomData.trim() !== "") {
-                    const streamConfig = {
-                        "url": targetCustomData.trim(),
-                        "agent": "OSCARTV2021",
-                        "acceptSSL": "1",
-                        "mediatype": "hls",
-                        "headers": CUSTOM_HEADERS
-                    };
-
                     const customServerPayload = {
                         "result": 0,
                         "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" },
                         "data": {
-                            "url": JSON.stringify(streamConfig),
+                            "url": JSON.stringify({
+                                "url": targetCustomData.trim(),
+                                "agent": "OSCARTV2021",
+                                "acceptSSL": "1",
+                                "mediatype": "hls",
+                                "headers": customHeaders
+                            }),
                             "agent": "advanced"
                         }
                     };
                     activeStreams.push(customServerPayload);
                 }
             }
-
-            return activeStreams.length > 0 ? activeStreams : emptyStreams;
-        });
-
-        res.json(data);
-    } catch (err) {
-        console.error("خطأ في معالجة البث:", err.message);
-        res.status(500).json({ error: true, message: "حدث خطأ أثناء معالجة الطلب" });
-    }
-});
 
             // 2. جلب السيرفرات الأساسية من API الدراما
             const postData = {
@@ -491,13 +475,12 @@ app.get("/stream", async (req, res) => {
                 } else {
                     let innerUrlString = item.url;
                     if (!innerUrlString.startsWith("{")) {
-                        innerUrlString = JSON.stringify({ "url": item.url, "agent": item.agent || DEFAULT_USER_AGENT, "acceptSSL": "1", "headers": { "User-Agent": item.agent || DEFAULT_USER_AGENT } });
+                        innerUrlString = JSON.stringify({ "url": item.url, "agent": item.agent || DEFAULT_AGENT, "acceptSSL": "1", "headers": { "User-Agent": item.agent || DEFAULT_AGENT } });
                     }
                     serverPayload = { "result": 0, "message": { "en": "operation succeeded", "ar": "تمت العملية بنجاح" }, "data": { "url": innerUrlString, "agent": "advanced" } };
                 }
 
                 if (serverPayload) {
-                    // التحقق مما إذا كان السيرفر شغالاً أم فارغاً
                     let checkUrl = serverPayload.data ? serverPayload.data.url : "";
                     const isEmpty = !checkUrl || checkUrl === "2" || checkUrl === "empty" || checkUrl.length < 5;
 
@@ -526,7 +509,7 @@ app.get("/stream", async (req, res) => {
                 serverCounter++;
             }
 
-            // ب) السيرفرات الفارغة في النهاية مع إشارة (فارغ)
+            // ب) السيرفرات الفارغة في النهاية
             for (const item of emptyStreams) {
                 const serverName = `سيرفر ${serverCounter} (فارغ)`;
                 item.name = serverName;
@@ -542,7 +525,6 @@ app.get("/stream", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
-
 
 
 
