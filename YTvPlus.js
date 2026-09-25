@@ -364,8 +364,8 @@ app.get("/stream", async (req, res) => {
 
             const customHeaders = {
                 "User-Agent": "OSCARTV2021",
-                "Accept-Encoding": "identity",
-                "Host": "lib.getmycssfiles.xyz:8080",
+                "Accept-Encoding": "gzip",
+                "Host": "assets.pushyourcss.world:8080",
                 "Connection": "Keep-Alive"
             };
 
