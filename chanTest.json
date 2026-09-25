@@ -52,5 +52,12 @@
     "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1388.css?x=/hls",
     "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1385.css?x=/hls",
     "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1565.css?x=/hls"
+  },
+
+  "live_tv_panel_9df3b16322fceee120cf2f1493d86bf6": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/593.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/590.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/41.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1454.css?x=/hls"
   }
 }
