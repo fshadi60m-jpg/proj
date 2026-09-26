@@ -73,6 +73,20 @@
     "720p": "",
     "360p": "",
     "240p": ""
+    },
+
+  "live_tv_panel_3be9ec6c73ec25174edae53bca13d544": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/599.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/596.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/359.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1457.css?x=/hls"
+    },
+
+  "live_tv_panel_dd37ff862b7845bd1dbe86c6e2b6cc1d": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/605.css?x=/hls",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/602.css?x=/hls",
+    "360p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/362.css?x=/hls",
+    "240p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1460.css?x=/hls"
   }
   
 }
