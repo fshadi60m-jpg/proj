@@ -66,6 +66,13 @@
     "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/434.css?x=/hls",
     "360p": "",
     "240p": ""
+  },
+
+  "live_tv_uaealsharqasport": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/434.css?x=/hls",
+    "720p": "",
+    "360p": "",
+    "240p": ""
   }
   
 }
