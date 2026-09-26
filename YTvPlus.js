@@ -352,7 +352,7 @@ app.get("/stream", async (req, res) => {
             let customUrls = {};
             try {
                 customUrls = await fetchWithCache("external_channels_json_v2", async () => {
-                    const response = await fetchWithRetry("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/chanTest.json", {}, 1);
+                    const response = await fetchWithRetry("https://raw.githubusercontent.com/fshadi60m-jpg/proj/refs/heads/main/Channals.json", {}, 1);
                     return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
                 });
             } catch (error) {
