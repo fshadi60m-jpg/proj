@@ -1,56 +1,134 @@
 {
   "live_tv_beinsport1": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1319.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1316.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1313.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1427.css?x=/hls"
   },
   "live_tv_beinsport2": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1328.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1325.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1538.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1322.css?x=/hls"
   },
   "live_tv_beinsport3": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1337.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1334.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1331.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1433.css?x=/hls"
   },
   "live_tv_beinsport4": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1346.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1343.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1340.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1448.css?x=/hls"
   },
   "live_tv_beinsport5": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1355.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1352.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1349.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1451.css?x=/hls"
   },
   "live_tv_beinsport6": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1364.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1361.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1358.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1556.css?x=/hls"
   },
   "live_tv_beinsport7": {
-    "1080p": "",
-    "720p": "",
-    "360p": "",
-    "240p": ""
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1373.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1370.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1367.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1559.css?x=/hls"
   },
   "live_tv_beinsport8": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1382.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1379.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1376.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1562.css?x=/hls"
+  },
+  "live_tv_beinsport9": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1391.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1388.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1385.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1565.css?x=/hls"
+  },
+
+  "live_tv_panel_9df3b16322fceee120cf2f1493d86bf6": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/593.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/590.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/41.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1454.css?x=/hls"
+   },
+
+  "live_tv_uaealsharqasport": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/434.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/434.css?x=/hls",
+    "360p": "",
+    "240p": ""
+  },
+
+  "live_tv_uaealsharqasport": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/434.css?x=/hls",
+    "720p": "",
+    "360p": "",
+    "240p": ""
+    },
+
+  "live_tv_panel_3be9ec6c73ec25174edae53bca13d544": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/599.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/596.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/359.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1457.css?x=/hls"
+    },
+
+  "live_tv_panel_dd37ff862b7845bd1dbe86c6e2b6cc1d": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/605.css?x=/hls",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/602.css?x=/hls",
+    "360p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/362.css?x=/hls",
+    "240p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1460.css?x=/hls"
+ },
+
+  "live_tv_alkaas1": {
+    "1080p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1481.css?x=/hls",
+    "720p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1478.css?x=/hls",
+    "360p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1589.css?x=/hls",
+    "240p": "http://assets.pushyourcss.world:8080/assets/res2/java2/1586.css?x=/hls"
+  },
+
+  "live_tv_alkaas2": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1487.css?x=/hls",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1484.css?x=/hls",
+    "360p": "",
+    "240p": ""
+    },
+
+  "live_tv_alkaas3": {
+    "1080p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1493.css?x=/hls",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/res2/java2/1490.css?x=/hls",
+    "360p": "",
+    "240p": ""
+    },
+
+  "live_tv_alkaas4": {
     "1080p": "",
     "720p": "",
     "360p": "",
     "240p": ""
-  },
-  "live_tv_beinsport9": {
+    },
+
+  "live_tv_alkaas5": {
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
+    },
+
+  "live_tv_alkaas6": {
     "1080p": "",
     "720p": "",
     "360p": "",
     "240p": ""
   }
+  
 }
