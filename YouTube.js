@@ -4,11 +4,8 @@ const YTDLPWrapper = require('yt-dlp-wrap').default;
 const path = require('path');
 const fs = require('fs');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const PORT = process.env.PORT || 3000;
+// استخدام Router بدلاً من app مستقل ليتوافق تماماً مع Xstarts.js
+const router = express.Router();
 
 // تحديد اسم وقارئ ملف yt-dlp بناءً على نظام تشغيل البيئة (Windows أو Linux الاستضافة)
 const isWindows = process.platform === 'win32';
@@ -73,7 +70,7 @@ function extractUploadDate(item) {
 // ==========================================
 // 1. مسار استخراج روابط وبيانات الفيديو المباشرة
 // ==========================================
-app.get('/api/extract', async (req, res) => {
+router.get('/api/extract', async (req, res) => {
     const videoUrl = req.query.url;
 
     if (!videoUrl) {
@@ -163,7 +160,7 @@ app.get('/api/extract', async (req, res) => {
 // ==========================================
 // 2. مسار استخراج معلومات القناة
 // ==========================================
-app.get('/api/channel/info', async (req, res) => {
+router.get('/api/channel/info', async (req, res) => {
     const channelUrl = req.query.url;
 
     if (!channelUrl) {
@@ -207,7 +204,7 @@ app.get('/api/channel/info', async (req, res) => {
 // ==========================================
 // 3. مسار استخراج فيديوهات القناة
 // ==========================================
-app.get('/api/channel/videos', async (req, res) => {
+router.get('/api/channel/videos', async (req, res) => {
     const channelUrl = req.query.url;
     const limit = req.query.limit || 20;
 
@@ -268,7 +265,7 @@ app.get('/api/channel/videos', async (req, res) => {
 // ==========================================
 // 4. مسار البحث الشامل عن الفيديوهات (Search)
 // ==========================================
-app.get('/api/search', async (req, res) => {
+router.get('/api/search', async (req, res) => {
     const query = req.query.q;
     const limit = req.query.limit || 20;
 
@@ -325,5 +322,8 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
-// تشغيل السيرفر وتهيئة أداة yt-dlp
-module.exports = app;
+// تهيئة أداة yt-dlp فور تحميل الملف
+initYtDlp();
+
+// تصدير الـ Router ليتم ربطه بـ Xstarts.js عبر app.use('/youtube', YouTube)
+module.exports = router;
