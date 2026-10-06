@@ -68,7 +68,7 @@ function extractUploadDate(item) {
 }
 
 // ==========================================
-// 1. مسار استخراج روابط وبيانات الفيديو المباشرة
+// 1. مسار استخراج روابط وبيانات الفيديو المباشرة (سريع + جميع الجودات)
 // ==========================================
 router.get('/api/extract', async (req, res) => {
     const videoUrl = req.query.url;
@@ -82,15 +82,16 @@ router.get('/api/extract', async (req, res) => {
             return res.status(500).json({ error: 'الأداة قيد التهيئة، يرجى المحاولة بعد لحظات...' });
         }
 
-        // استخدام عميل أندرويد لتجاوز فحص البوت (Bot Detection)
+        // استخدام عملاء استخراج متسارعين للحصول على كامل الجودات وتفادي حظر يوتيوب
         const stdout = await ytDlpWrap.execPromise([
             videoUrl,
             '--dump-json',
+            '--no-playlist',
             '--no-check-certificates',
             '--no-warnings',
-            '--extractor-args', 'youtube:player_client=android,web',
+            '--extractor-args', 'youtube:player_client=ios,android_vr,web',
             '--add-header', 'referer:youtube.com',
-            '--add-header', 'user-agent:Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
+            '--add-header', 'user-agent:Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15'
         ]);
 
         const output = JSON.parse(stdout);
@@ -99,17 +100,20 @@ router.get('/api/extract', async (req, res) => {
         const isShort = (output.duration && output.duration <= 60) || videoUrl.includes('/shorts/');
         const dateInfo = extractUploadDate(output);
 
+        // 1. استخراج أفضل مسار صوت صافي (Audio Only)
         const bestAudio = formats
             .filter(f => f.acodec !== 'none' && f.vcodec === 'none' && f.url)
             .sort((a, b) => (b.abr || 0) - (a.abr || 0))[0];
 
+        // 2. تجميع كل الجودات المتاحة (1080p, 720p, 480p, 360p...)
         const videoStreamsMap = new Map();
 
         formats.forEach(f => {
-            if (f.height && f.vcodec !== 'none' && f.url) {
+            if (f.height && f.url) {
                 const height = f.height;
-                const hasAudio = f.acodec !== 'none';
+                const hasAudio = f.acodec !== 'none' && f.acodec !== null;
 
+                // التفضيل للجودات المكتملة أو حفظ أعلى جودة مسار لكل ارتفاع
                 if (!videoStreamsMap.has(height) || hasAudio) {
                     videoStreamsMap.set(height, {
                         quality: `${height}p`,
@@ -123,6 +127,7 @@ router.get('/api/extract', async (req, res) => {
             }
         });
 
+        // ترتيب الجودات تنازلياً من الأعلى إلى الأدنى
         const videoStreams = Array.from(videoStreamsMap.values()).sort((a, b) => b.height - a.height);
 
         res.json({
@@ -156,6 +161,8 @@ router.get('/api/extract', async (req, res) => {
         res.status(500).json({ status: 'error', message: 'فشل استخراج الروابط المباشرة', details: error.message });
     }
 });
+
+
 // ==========================================
 // 2. مسار استخراج معلومات القناة
 // ==========================================
