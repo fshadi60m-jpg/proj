@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 const Sadeem = require("./Sadeem.js");
 const FloraTv = require("./FloraTv.js");
 const YTvPlus = require("./YTvPlus.js");
+const YouTube = require("./YouTube.js");
 
 // ==========================================
 // 2. ربط الملفات بمسارات محددة (Routing)
@@ -27,14 +28,15 @@ app.use("/floratv", FloraTv);
 // مسارات YTvPlus (دراما لايف سابقاً) ستكون مسبوقة بـ /ytvplus
 app.use("/ytvplus", YTvPlus);
 
+// مسارات YouTube المضافة حديثاً ستكون مسبوقة بـ /youtube
+app.use("/youtube", YouTube);
+
 // ==========================================
 // 3. مسار رئيسي لفحص حالة السيرفر (Health Check)
-// مهم لتعرف أن السيرفر يعمل ولتتأكد منصة الاستضافة من نجاح التشغيل
 // ==========================================
 app.get("/", (req, res) => {
     res.json([]);
 });
-
 
 // ==========================================
 // 4. تشغيل الخادم
