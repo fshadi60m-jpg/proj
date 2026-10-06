@@ -82,13 +82,15 @@ router.get('/api/extract', async (req, res) => {
             return res.status(500).json({ error: 'الأداة قيد التهيئة، يرجى المحاولة بعد لحظات...' });
         }
 
+        // استخدام عميل أندرويد لتجاوز فحص البوت (Bot Detection)
         const stdout = await ytDlpWrap.execPromise([
             videoUrl,
             '--dump-json',
             '--no-check-certificates',
             '--no-warnings',
+            '--extractor-args', 'youtube:player_client=android,web',
             '--add-header', 'referer:youtube.com',
-            '--add-header', 'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            '--add-header', 'user-agent:Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
         ]);
 
         const output = JSON.parse(stdout);
@@ -97,12 +99,10 @@ router.get('/api/extract', async (req, res) => {
         const isShort = (output.duration && output.duration <= 60) || videoUrl.includes('/shorts/');
         const dateInfo = extractUploadDate(output);
 
-        // استخراج أفضل مسار صوت صافي (Audio-Only)
         const bestAudio = formats
             .filter(f => f.acodec !== 'none' && f.vcodec === 'none' && f.url)
             .sort((a, b) => (b.abr || 0) - (a.abr || 0))[0];
 
-        // تجميع جودات الفيديو المتاحة بدون تكرار
         const videoStreamsMap = new Map();
 
         formats.forEach(f => {
@@ -156,7 +156,6 @@ router.get('/api/extract', async (req, res) => {
         res.status(500).json({ status: 'error', message: 'فشل استخراج الروابط المباشرة', details: error.message });
     }
 });
-
 // ==========================================
 // 2. مسار استخراج معلومات القناة
 // ==========================================
