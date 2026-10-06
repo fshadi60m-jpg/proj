@@ -11,7 +11,9 @@
     "axios": "^1.6.2",
     "crypto-js": "^4.2.0",
     "node-cache": "^5.1.2",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "yt-dlp-wrap": "^2.3.12"
   },
   "engines": {
     "node": "20.x"
