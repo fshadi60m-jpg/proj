@@ -540,7 +540,20 @@ app.get("/stream", async (req, res) => {
                 }
             }
 
-            // تجميع وتسمية العناصر المعادة بنشاط وهيكلية معتادة
+    // تجميع وتسمية العناصر المعادة بنشاط وهيكلية معتادة
+            // 🌟 إعادة ترتيب السيرفرات بحيث تظهر سيرفرات الدومين aid7.aidatacenter.cyou في البداية أولاً
+            activeStreams.sort((a, b) => {
+                const urlA = (a.data && a.data.url) ? a.data.url : "";
+                const urlB = (b.data && b.data.url) ? b.data.url : "";
+                
+                const isDomainA = urlA.includes("aid7.aidatacenter.cyou");
+                const isDomainB = urlB.includes("aid7.aidatacenter.cyou");
+
+                if (isDomainA && !isDomainB) return -1;
+                if (!isDomainA && isDomainB) return 1;
+                return 0;
+            });
+
             let finalStreamsArray = [];
             let serverCounter = 1;
 
@@ -571,6 +584,8 @@ app.get("/stream", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
+
+
 
 app.get('/', (req, res) => {
   res.json([]);
