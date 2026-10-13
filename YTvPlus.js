@@ -546,8 +546,8 @@ app.get("/stream", async (req, res) => {
                 const urlA = (a.data && a.data.url) ? a.data.url : "";
                 const urlB = (b.data && b.data.url) ? b.data.url : "";
                 
-                const isDomainA = urlA.includes("aid7.aidatacenter.cyou");
-                const isDomainB = urlB.includes("aid7.aidatacenter.cyou");
+                const isDomainA = urlA.includes(".aidatacenter.");
+                const isDomainB = urlB.includes(".aidatacenter.");
 
                 if (isDomainA && !isDomainB) return -1;
                 if (!isDomainA && isDomainB) return 1;
