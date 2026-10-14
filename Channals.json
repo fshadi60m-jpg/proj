@@ -110,21 +110,63 @@
     "240p": ""
     },
 
-  "live_tv_alkaas4": {
+  "live_tv_aljeria1": {
     "1080p": "",
-    "720p": "",
+    "720p": "http://assets.pushyourcss.world:8080/assets/79768337/22315546/1505.css",
     "360p": "",
     "240p": ""
     },
 
-  "live_tv_alkaas5": {
+  "live_tv_aljeria2": {
     "1080p": "",
-    "720p": "",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/79768337/22315546/1508.css",
     "360p": "",
     "240p": ""
     },
 
-  "live_tv_alkaas6": {
+  "live_tv_aljeria3": {
+    "1080p": "",
+    "720p": "http://static.assetsfileslocal.store:8080/assets/79768337/22315546/1511.css",
+    "360p": "",
+    "240p": ""
+  },
+
+    "live_tv_aljeria4": {
+    "1080p": "",
+    "720p": "http://assets.pushyourcss.world:8080/assets/79768337/22315546/1514.css",
+    "360p": "",
+    "240p": ""
+  },
+
+   "live_tv_aljeria5": {
+    "1080p": "",
+    "720p": "http://assets.pushyourcss.world:8080/assets/79768337/22315546/1517.css",
+    "360p": "",
+    "240p": ""
+  },
+
+   "live_tv_aljeria6": {
+    "1080p": "",
+    "720p": "http://assets.pushyourcss.world:8080/assets/79768337/22315546/1520.css",
+    "360p": "",
+    "240p": ""
+  },
+
+   "live_tv_onsport": {
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
+  },
+
+   "live_tv_onsport2": {
+    "1080p": "",
+    "720p": "",
+    "360p": "",
+    "240p": ""
+  },
+
+   "live_tv_onsport3": {
     "1080p": "",
     "720p": "",
     "360p": "",
