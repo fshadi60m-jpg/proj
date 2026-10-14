@@ -762,12 +762,14 @@ app.get("/get-redirect-data", async (req, res) => {
     } catch (error) { res.status(error.message.includes("لم يتم العثور") ? 404 : 500).json({ error: true, message: error.message }); }
 });
 
-app.get("/live_id/:id", (req, res) => {
-    const id_live = req.params.id;
-    if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id في الرابط" });
 
-    // تحويل مباشر لتنفيذ مسار /last/
-    res.redirect(`/last/${id_live}`);
+
+
+
+app.get("/live_id/:id", (req, res, next) => {
+    // إعادة توجيه الطلب داخلياً إلى مسار /last/ بنفس المعرف
+    req.url = `/last/${req.params.id}`;
+    app._router.handle(req, res, next);
 });
 
 app.get("/last/:id_live", async (req, res) => {
@@ -856,6 +858,16 @@ app.get("/last/:id_live", async (req, res) => {
         res.json(data);
     } catch (error) { res.status(error.message.includes("لم يتم العثور") ? 404 : 500).json({ error: true, message: error.message }); }
 });
+
+
+
+
+
+
+
+
+
+
 
 app.get("/mach", async (req, res) => {
     try {
