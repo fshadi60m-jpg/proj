@@ -569,8 +569,13 @@ app.get("/stream", async (req, res) => {
                 serverCounter++;
             }
 
+      // إذا كانت جميع السيرفرات فارغة ولا يوجد أي سيرفر شغال، يتم إرجاع مصفوفة فارغة []
+            if (activeStreams.length === 0) {
+                return [];
+            }
+
             for (const item of emptyStreams) {
-                const serverName = `سيرفر ${serverCounter} (فارغ)`;
+                const serverName = `سيرفر ${serverCounter} []`;
                 item.name = serverName;
                 if (item.data) item.data.name = serverName;
 
@@ -579,6 +584,7 @@ app.get("/stream", async (req, res) => {
             }
 
             return finalStreamsArray;
+            
         });
 
         res.json(data);
