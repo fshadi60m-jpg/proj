@@ -540,8 +540,7 @@ app.get("/stream", async (req, res) => {
                 }
             }
 
-    // تجميع وتسمية العناصر المعادة بنشاط وهيكلية معتادة
-            // 🌟 إعادة ترتيب السيرفرات بحيث تظهر سيرفرات الدومين aid7.aidatacenter.cyou في البداية أولاً
+// 🌟 إعادة ترتيب السيرفرات بحيث تظهر سيرفرات الدومين aid7.aidatacenter.cyou في البداية أولاً
             activeStreams.sort((a, b) => {
                 const urlA = (a.data && a.data.url) ? a.data.url : "";
                 const urlB = (b.data && b.data.url) ? b.data.url : "";
@@ -554,9 +553,15 @@ app.get("/stream", async (req, res) => {
                 return 0;
             });
 
+            // إذا كانت جميع السيرفرات فارغة ترجع مصفوفة فارغة []
+            if (activeStreams.length === 0) {
+                return [];
+            }
+
             let finalStreamsArray = [];
             let serverCounter = 1;
 
+            // إرجاع السيرفرات الشغالة فقط وحذف الفارغة
             for (const item of activeStreams) {
                 let qualityLabel = item.data && item.data.qualityLabel ? ` (${item.data.qualityLabel})` : "";
                 if (item.data) delete item.data.qualityLabel;
@@ -569,28 +574,12 @@ app.get("/stream", async (req, res) => {
                 serverCounter++;
             }
 
-      // إذا كانت جميع السيرفرات فارغة ولا يوجد أي سيرفر شغال، يتم إرجاع مصفوفة فارغة []
-            if (activeStreams.length === 0) {
-                return [];
-            }
-
-            for (const item of emptyStreams) {
-                const serverName = `سيرفر ${serverCounter} []`;
-                item.name = serverName;
-                if (item.data) item.data.name = serverName;
-
-                finalStreamsArray.push(item);
-                serverCounter++;
-            }
-
             return finalStreamsArray;
-            
         });
 
         res.json(data);
     } catch (error) { res.status(500).json({ error: true, message: error.message }); }
 });
-
 
 
 app.get('/', (req, res) => {
@@ -773,40 +762,12 @@ app.get("/get-redirect-data", async (req, res) => {
     } catch (error) { res.status(error.message.includes("لم يتم العثور") ? 404 : 500).json({ error: true, message: error.message }); }
 });
 
-app.get("/live_id/:id", async (req, res) => {
-    try {
-        const id_live = req.params.id;
-        if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id في الرابط" });
+app.get("/live_id/:id", (req, res) => {
+    const id_live = req.params.id;
+    if (!id_live) return res.status(400).json({ error: true, message: "يرجى إرسال id في الرابط" });
 
-        const cacheKey = `smart_live_${id_live}`;
-        
-        const data = await fetchWithCache(cacheKey, async () => {
-            const localBaseUrl = `http://localhost:${PORT}`;
-            try {
-                const redirectResponse = await axios.get(`${localBaseUrl}/get-redirect-data?id_live=${id_live}`);
-                const redirectData = redirectResponse.data;
-                const returnedUrl = redirectData?.data?.url || "";
-
-                if (returnedUrl && returnedUrl !== "1" && returnedUrl !== "empty") { return redirectData; }
-            } catch (err) {}
-
-            const streamResponse = await axios.get(`${localBaseUrl}/stream?id_live=${id_live}`);
-            const streamData = streamResponse.data;
-            let hasValidStreams = false;
-            if (Array.isArray(streamData)) {
-                hasValidStreams = streamData.some(server => server.data && server.data.url && server.data.url.trim() !== "");
-            }
-
-            if (hasValidStreams) { return streamData; }
-
-            try {
-                const lastResponse = await axios.get(`${localBaseUrl}/last/${id_live}`);
-                return lastResponse.data;
-            } catch (lastErr) { return streamData; }
-        });
-
-        res.json(data);
-    } catch (error) { res.status(500).json({ error: true, message: "حدث خطأ أثناء معالجة المسار الذكي: " + error.message }); }
+    // تحويل مباشر لتنفيذ مسار /last/
+    res.redirect(`/last/${id_live}`);
 });
 
 app.get("/last/:id_live", async (req, res) => {
