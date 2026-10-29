@@ -1,19 +1,20 @@
 {
-  "name": "api-server",
+  "name": "kirozozo-unified-server",
   "version": "1.0.0",
-  "description": "Unified API server",
+  "description": "Unified API server and Live Stream Player",
   "main": "Xstarts.js",
   "scripts": {
     "start": "node Xstarts.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.2",
+    "express": "^4.19.2",
+    "axios": "^1.6.8",
     "crypto-js": "^4.2.0",
     "node-cache": "^5.1.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
-    "yt-dlp-wrap": "^2.3.12"
+    "yt-dlp-wrap": "^2.3.12",
+    "ejs": "^3.1.10"
   },
   "engines": {
     "node": "20.x"
