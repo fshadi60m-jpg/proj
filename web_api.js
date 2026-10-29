@@ -1,16 +1,13 @@
 const express = require('express');
+const router = express.Router(); // <-- هذا السطر هو الذي كان مفقوداً ويسبب الخطأ
 const axios = require('axios');
-const cors = require('cors');
 const NodeCache = require('node-cache');
 const ejs = require('ejs');
 const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 
-const app = express();
-app.set('trust proxy', 1);
-
-// استخدام Keep-Alive لتقليل استهلاك موارد السيرفر عند عمل طلبات كثيرة
+// استخدام Keep-Alive
 const axiosInstance = axios.create({
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: new https.Agent({ keepAlive: true })
@@ -20,15 +17,11 @@ const axiosInstance = axios.create({
 const matchesCache = new NodeCache({ stdTTL: 60 });
 const serverCache = new NodeCache({ stdTTL: 3600 });
 const tokenCache = new NodeCache({ stdTTL: 14400, checkperiod: 600 });
-const m3u8Cache = new NodeCache({ stdTTL: 2 }); // كاش المانيفيست لثانيتين فقط (للبث المباشر)
-
-// لمنع استدعاء نفس الرابط أكثر من مرة في نفس اللحظة
+const m3u8Cache = new NodeCache({ stdTTL: 2 });
 const activeM3u8Requests = new Map(); 
 
-app.use(cors());
-
-// السماح بالتضمين iframe
-app.use((req, res, next) => {
+// ميدل وير خاص فقط بهذا الموجه لفرض السماح بتضمين iframe
+router.use((req, res, next) => {
     res.removeHeader('X-Frame-Options');
     res.setHeader('Content-Security-Policy', "frame-ancestors *");
     next();
@@ -37,20 +30,17 @@ app.use((req, res, next) => {
 const encodeId = (id) => Buffer.from(id).toString('base64');
 const decodeId = (encoded) => Buffer.from(encoded, 'base64').toString('utf-8');
 
-// استخراج IP العميل الحقيقي (حتى خلف Cloudflare أو Proxies)
 const getClientIp = (req) => {
     const forwarded = req.headers['x-forwarded-for'];
     return forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress;
 };
 
-// توليد توكن مربوط بـ IP العميل
 const generateSecureToken = (ip) => {
     const token = crypto.randomBytes(16).toString('hex');
-    tokenCache.set(token, ip); // تخزين الـ IP مع التوكن
+    tokenCache.set(token, ip);
     return token;
 };
 
-// دالة الجلب الاحتياطية
 async function fetchWithFallback(path) {
     try {
         return await axiosInstance.get(`https://api.kirozozo.xyz${path}`, { timeout: 8000 });
@@ -60,32 +50,27 @@ async function fetchWithFallback(path) {
     }
 }
 
-// حماية مسارات البث (التحقق من التوكن، الـ IP، والـ Referer)
 const verifyStreamAccess = (req, res, next) => {
     const { tk } = req.query;
     const clientIp = getClientIp(req);
     const cachedIp = tokenCache.get(tk);
     
-    // 1. فحص التوكن والـ IP
     if (!tk || !cachedIp || cachedIp !== clientIp) {
         return res.status(403).json({ error: "Access Denied. Invalid or stolen token." });
     }
 
-    // 2. فحص الـ Referer (اختياري لكن قوي جداً ضد سرقة الروابط للمشغلات الخارجية)
     const referer = req.headers.referer || '';
     const host = req.get('host');
-    // السماح إذا كان الطلب قادم من نفس النطاق (حتى لو كان iframe داخل موقع آخر، الـ Referer لطلبات الفيديو سيكون نطاقك)
     if (referer && !referer.includes(host)) {
         return res.status(403).json({ error: "Access Denied. Hotlinking not allowed." });
     }
-
     next();
 };
 
 // ==========================================
-// 1. مسار الـ API 
+// 1. مسار الـ API (تصفية المباريات)
 // ==========================================
-app.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         let matches = matchesCache.get('all_matches');
         
@@ -95,7 +80,7 @@ app.get('/', async (req, res) => {
                 const encodedId = encodeId(match.id_live);
                 const cleanedMatch = {
                     ...match,
-                    player_url: `https://${req.get('host')}/m?v=${encodedId}`
+                    player_url: `https://${req.get('host')}${req.baseUrl}/m?v=${encodedId}`
                 };
                 delete cleanedMatch.id_live;
                 delete cleanedMatch.date;
@@ -111,7 +96,7 @@ app.get('/', async (req, res) => {
 });
 
 // ==========================================
-// 2. واجهة المشغل (مع تعديلات HLS.js)
+// 2. واجهة المشغل
 // ==========================================
 const playerTemplate = `
 <!DOCTYPE html>
@@ -123,7 +108,6 @@ const playerTemplate = `
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        /* CSS كما هو في كودك الأصلي تماماً بدون أي حذف */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html { height: 100%; width: 100%; background-color: #000; font-family: 'Tajawal', sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         .player-container { position: relative; width: 100%; height: 100%; max-width: 1200px; max-height: 800px; background-color: #000; overflow: hidden; cursor: default; user-select: none; -webkit-user-select: none; }
@@ -183,7 +167,6 @@ const playerTemplate = `
 </head>
 <body>
     <div class="player-container" id="playerContainer">
-        <!-- الـ HTML الخاص بالمشغل كما هو تماماً -->
         <div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div><div class="loading-text">جاري الاتصال بالبث...</div></div>
         <div id="unmuteOverlay" class="unmute-overlay"><div class="unmute-btn"><svg viewBox="0 0 24 24" width="36" height="36" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></div><span class="unmute-text">انقر لتشغيل الصوت</span></div>
         <video id="video" playsinline webkit-playsinline autoplay muted></video>
@@ -232,6 +215,7 @@ const playerTemplate = `
         const unmuteOverlay = document.getElementById('unmuteOverlay');
         const id_live = "<%= id_live %>";
         const token = "<%= token %>";
+        const baseUrl = "<%= baseUrl %>";
         let hls = null;
         let inactivityTimeout;
 
@@ -279,20 +263,14 @@ const playerTemplate = `
                 element.classList.add('active');
             }
 
-            const manifestUrl = \`/proxy/playlist.m3u8?id=\${id_live}&s=\${serverIndex}&tk=\${token}\`;
+            const manifestUrl = \`\${baseUrl}/proxy/playlist.m3u8?id=\${id_live}&s=\${serverIndex}&tk=\${token}\`;
 
             if (hls) { hls.destroy(); hls = null; }
             
             if (Hls.isSupported()) {
-                // إعدادات احترافية لمزامنة اللايف وتقليل استهلاك الرام
                 hls = new Hls({ 
-                    enableWorker: true, 
-                    lowLatencyMode: true, 
-                    liveSyncDurationCount: 3, // القفز لللايف بحيث لا يتأخر البث
-                    liveMaxLatencyDurationCount: 5, // أقصى تأخير مسموح قبل أن يقوم بعمل Refresh لنقطة البث
-                    backBufferLength: 60, // حذف الكاش القديم (60 ثانية) لتخفيف الرام
-                    fragLoadingTimeOut: 15000, 
-                    manifestLoadingTimeOut: 15000 
+                    enableWorker: true, lowLatencyMode: true, liveSyncDurationCount: 3, 
+                    liveMaxLatencyDurationCount: 5, backBufferLength: 60, fragLoadingTimeOut: 15000, manifestLoadingTimeOut: 15000 
                 }); 
                 hls.loadSource(manifestUrl); 
                 hls.attachMedia(video);
@@ -344,9 +322,9 @@ const playerTemplate = `
 `;
 
 // ==========================================
-// 3. مسار المشغل
+// 3. مسار المشغل الرئيسي
 // ==========================================
-app.get('/m', async (req, res) => {
+router.get('/m', async (req, res) => {
     try {
         const encodedId = req.query.v;
         if (!encodedId) return res.status(400).send("Invalid Request");
@@ -401,9 +379,9 @@ app.get('/m', async (req, res) => {
         }
 
         const clientIp = getClientIp(req);
-        const secureToken = generateSecureToken(clientIp); // ربط التوكن بالـ IP
+        const secureToken = generateSecureToken(clientIp);
         const fullUrl = `https://${req.get('host')}${req.originalUrl}`;
-        const renderedHtml = ejs.render(playerTemplate, { match: matchInfo, servers: parsedServers, id_live, token: secureToken, fullUrl });
+        const renderedHtml = ejs.render(playerTemplate, { match: matchInfo, servers: parsedServers, id_live, token: secureToken, fullUrl, baseUrl: req.baseUrl });
         res.send(renderedHtml);
 
     } catch (error) {
@@ -412,24 +390,22 @@ app.get('/m', async (req, res) => {
 });
 
 // ==========================================
-// 4. مسار البروكسي لملف (M3U8) - مع نظام Deduplication و Caching
+// 4. مسار البروكسي لملف (M3U8)
 // ==========================================
-app.get('/proxy/playlist.m3u8', verifyStreamAccess, async (req, res) => {
+router.get('/proxy/playlist.m3u8', verifyStreamAccess, async (req, res) => {
     const { id, s, tk } = req.query; 
     const srvConfig = serverCache.get(`srv_${id}_${s}`);
     
     if (!srvConfig || !srvConfig.realUrl) return res.status(404).send("Server not found");
 
     const cacheKey = `m3u8_raw_${id}_${s}`;
-    let rawM3u8 = m3u8Cache.get(cacheKey); // التحقق من الكاش
+    let rawM3u8 = m3u8Cache.get(cacheKey);
 
     try {
         if (!rawM3u8) {
-            // إذا كان هناك طلب جاري بالفعل (نفس الثانية) ننتظره بدل فتح اتصال جديد بالمصدر
             if (activeM3u8Requests.has(cacheKey)) {
                 rawM3u8 = await activeM3u8Requests.get(cacheKey);
             } else {
-                // إنشاء طلب جديد وحفظ الوعد (Promise) ليتمكن الآخرين من انتظاره
                 const requestPromise = axiosInstance.get(srvConfig.realUrl, { 
                     headers: srvConfig.customHeaders, responseType: 'text', timeout: 10000 
                 }).then(response => response.data);
@@ -437,15 +413,14 @@ app.get('/proxy/playlist.m3u8', verifyStreamAccess, async (req, res) => {
                 activeM3u8Requests.set(cacheKey, requestPromise);
                 rawM3u8 = await requestPromise;
                 
-                m3u8Cache.set(cacheKey, rawM3u8); // حفظ الخام في الكاش لثانيتين
-                activeM3u8Requests.delete(cacheKey); // إزالة الوعد بعد الانتهاء
+                m3u8Cache.set(cacheKey, rawM3u8); 
+                activeM3u8Requests.delete(cacheKey); 
             }
         }
 
         const baseUrl = srvConfig.realUrl.substring(0, srvConfig.realUrl.lastIndexOf('/') + 1);
         const lines = rawM3u8.split('\n');
         
-        // تعديل الروابط بسرعة فائقة (String manipulation)
         const modifiedLines = lines.map(line => {
             let trimmed = line.trim();
             if (!trimmed.startsWith('#') && trimmed !== '') {
@@ -453,7 +428,7 @@ app.get('/proxy/playlist.m3u8', verifyStreamAccess, async (req, res) => {
                 if (srvConfig.swapKey && srvConfig.swapVal !== null && segmentUrl.includes(srvConfig.swapKey)) {
                     segmentUrl = segmentUrl.replace(srvConfig.swapKey, srvConfig.swapVal);
                 }
-                return `/proxy/segment.ts?id=${id}&s=${s}&tk=${tk}&url=${encodeURIComponent(segmentUrl)}`;
+                return `${req.baseUrl}/proxy/segment.ts?id=${id}&s=${s}&tk=${tk}&url=${encodeURIComponent(segmentUrl)}`;
             }
             return line;
         });
@@ -461,21 +436,20 @@ app.get('/proxy/playlist.m3u8', verifyStreamAccess, async (req, res) => {
         res.set({ 'Content-Type': 'application/vnd.apple.mpegurl', 'Access-Control-Allow-Origin': '*' });
         res.send(modifiedLines.join('\n'));
     } catch (error) {
-        activeM3u8Requests.delete(cacheKey); // تنظيف في حالة الخطأ
+        activeM3u8Requests.delete(cacheKey); 
         res.status(500).send("Playlist Error");
     }
 });
 
 // ==========================================
-// 5. مسار البروكسي لقطع الفيديو (TS) - مع نظام حماية الباندويث
+// 5. مسار البروكسي لقطع الفيديو (TS)
 // ==========================================
-app.get('/proxy/segment.ts', verifyStreamAccess, async (req, res) => {
+router.get('/proxy/segment.ts', verifyStreamAccess, async (req, res) => {
     const { id, s, url } = req.query;
     const srvConfig = serverCache.get(`srv_${id}_${s}`);
     
     if (!srvConfig) return res.status(404).send();
 
-    // AbortController لايقاف التحميل من المصدر فوراً إذا قام المستخدم بإغلاق الصفحة
     const controller = new AbortController();
     req.on('close', () => controller.abort());
 
@@ -484,7 +458,7 @@ app.get('/proxy/segment.ts', verifyStreamAccess, async (req, res) => {
             headers: srvConfig.customHeaders, 
             responseType: 'stream', 
             timeout: 15000,
-            signal: controller.signal // ربط الطلب بـ Signal
+            signal: controller.signal 
         });
         
         res.set({ 'Content-Type': 'video/MP2T', 'Access-Control-Allow-Origin': '*' });
@@ -496,4 +470,5 @@ app.get('/proxy/segment.ts', verifyStreamAccess, async (req, res) => {
     }
 });
 
+// تصدير الـ Router ليتم استدعاؤه في Xstarts.js
 module.exports = router;
