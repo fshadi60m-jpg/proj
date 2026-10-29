@@ -1,41 +1,43 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 
-// تحديد المنفذ (Port) - المنصة ستضع المنفذ الخاص بها هنا، أو سيعمل على 3000 محلياً
 const PORT = process.env.PORT || 3000;
 
-// إعدادات أساسية لتمكين السيرفر من قراءة البيانات المرسلة بصيغة JSON
+// إعدادات أساسية لعمل السيرفر خلف Nginx أو Cloudflare
+app.set('trust proxy', 1);
+app.use(cors());
+
+// إعدادات لتمكين السيرفر من قراءة البيانات JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// 1. استدعاء ملفات الـ APIs الخاصة بك بالأسماء الجديدة
+// 1. استدعاء ملفات الـ APIs والمشغل
 // ==========================================
 const Sadeem = require("./Sadeem.js");
 const FloraTv = require("./FloraTv.js");
 const YTvPlus = require("./YTvPlus.js");
 const YouTube = require("./YouTube.js");
+const WebApi = require("./web_api.js"); // <--- هذا هو ملف المشغل الجديد
 
 // ==========================================
 // 2. ربط الملفات بمسارات محددة (Routing)
 // ==========================================
-// مسارات Sadeem (توب سينما سابقاً) ستكون مسبوقة بـ /sadeem
 app.use("/sadeem", Sadeem);
-
-// مسارات FloraTv (لاروزا سابقاً) ستكون مسبوقة بـ /floratv
 app.use("/floratv", FloraTv);
-
-// مسارات YTvPlus (دراما لايف سابقاً) ستكون مسبوقة بـ /ytvplus
 app.use("/ytvplus", YTvPlus);
-
-// مسارات YouTube المضافة حديثاً ستكون مسبوقة بـ /youtube
 app.use("/youtube", YouTube);
 
+// مسار المشغل الجديد سيكون مسبوقاً بـ /web
+// (مثال: لدخول المشغل سيكون الرابط موقعك/web/m?v=...)
+app.use("/web", WebApi); 
+
 // ==========================================
-// 3. مسار رئيسي لفحص حالة السيرفر (Health Check)
+// 3. مسار رئيسي لفحص حالة السيرفر
 // ==========================================
 app.get("/", (req, res) => {
-    res.json([]);
+    res.json({ status: "ok", message: "Server is running perfectly" });
 });
 
 // ==========================================
