@@ -362,12 +362,19 @@ app.get("/stream", async (req, res) => {
 
             const targetCustomData = customUrls[id_live];
 
-            const customHeaders = {
-                "User-Agent": "OSCARTV2021",
-                "Accept-Encoding": "gzip",
-                "Host": "assets.pushyourcss.world:8080",
-                "Connection": "Keep-Alive"
-            };
+        const customHeaders = {
+    "Cookie": "ot=itns4r4.gngWmWLEMWZdTEDt9R3NUL3f9Lb.7z36PRGk3wZ4yqycutJND8IsPAx.czUbDH5FI8SFGKZqVGyAzTNfwKw.0bZbt_cXmy33LgETWvQOPMUOkWR.r47331.7E0S_oZxb5uceyTBEWclO-W5SqW",
+    "Accept": "text/css,*/*;q=0.1",
+    "User-Agent": "OSCARTV2021",
+    "Referer": "http://js.newjavalibrary.world:8080/",
+    "Sec-Fetch-Dest": "style",
+    "Sec-Fetch-Site": "same-origin",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Fetch-Mode": "no-cors",
+    "Accept-Encoding": "gzip",
+    "Host": "js.newjavalibrary.world:8080",
+    "Connection": "Keep-Alive"
+};
 
             // أ) معالجة السيرفرات الخاصة من ملف JSON
             if (targetCustomData) {
