@@ -347,7 +347,7 @@ const playerTemplate = `
 router.get('/m', async (req, res) => {
     try {
         const encodedId = req.query.v;
-        if (!encodedId) return res.status(400).send("Invalid Request");
+        if (!encodedId) return res.status(400).send("لم تبدأ المباراه بعد");
 
         const id_live = decodeId(encodedId);
 
