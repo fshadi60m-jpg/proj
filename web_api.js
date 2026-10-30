@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router(); // <-- هذا السطر هو الذي كان مفقوداً ويسبب الخطأ
+const router = express.Router(); 
 const axios = require('axios');
 const NodeCache = require('node-cache');
 const ejs = require('ejs');
@@ -50,20 +50,34 @@ async function fetchWithFallback(path) {
     }
 }
 
+// === نظام حماية الستريم الصارم ===
 const verifyStreamAccess = (req, res, next) => {
     const { tk } = req.query;
     const clientIp = getClientIp(req);
     const cachedIp = tokenCache.get(tk);
     
+    // 1. فحص صحة التوكن وارتباطه بالـ IP
     if (!tk || !cachedIp || cachedIp !== clientIp) {
-        return res.status(403).json({ error: "Access Denied. Invalid or stolen token." });
+        return res.status(403).send("Access Denied. Invalid or stolen token.");
     }
 
-    const referer = req.headers.referer || '';
+    const referer = req.headers.referer || req.headers.origin || '';
     const host = req.get('host');
-    if (referer && !referer.includes(host)) {
-        return res.status(403).json({ error: "Access Denied. Hotlinking not allowed." });
+    const userAgent = req.headers['user-agent'] || '';
+
+    // 2. حماية الـ Referer الصارمة (لمنع نسخ الرابط وفتحه خارج المشغل)
+    const isApple = /iPhone|iPad|iPod|AppleCoreMedia/i.test(userAgent);
+    
+    // إذا لم يكن هناك Referer (تم لصق الرابط مباشرة) وليس جهاز آيفون، يتم حظره
+    if (!referer && !isApple) {
+        return res.status(403).send("Direct Access Not Allowed.");
     }
+
+    // إذا كان هناك Referer، يجب أن يكون من نفس سيرفرنا (السماح لـ iframe داخل المواقع الأخرى بالعمل لأن الـ iframe يعتبر السيرفر الخاص بنا هو الـ origin)
+    if (referer && !referer.includes(host)) {
+        return res.status(403).send("Hotlinking Not Allowed.");
+    }
+
     next();
 };
 
@@ -104,7 +118,7 @@ const playerTemplate = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><%= match.team1 %> ضد <%= match.team2 %> - بث مباشر</title>
+    <title><%= displayTitle %> - بث مباشر</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -127,7 +141,8 @@ const playerTemplate = `
         .player-container.hide-ui .glass-bar { opacity: 0; pointer-events: none; }
         .player-container.hide-ui .glass-bar.title-bar { transform: translate(-50%, -15px); }
         .player-container.hide-ui .glass-bar.controls-bar { transform: translate(-50%, 15px); }
-        .logo-text { color: #ffffff; font-size: 17px; font-weight: 700; text-decoration: none; }
+        .logo-text { color: #ffffff; font-size: 17px; font-weight: 700; text-decoration: none; cursor: pointer; transition: color 0.2s; }
+        .logo-text:hover { color: #5c4dff; }
         .video-title { color: #e5e7eb; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; text-align: right; }
         .left-controls { display: flex; align-items: center; gap: 8px; width: 100px; }
         .live-dot { width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; box-shadow: 0 0 8px rgba(255, 59, 48, 0.8); animation: pulse 2s infinite; }
@@ -170,7 +185,12 @@ const playerTemplate = `
         <div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div><div class="loading-text">جاري الاتصال بالبث...</div></div>
         <div id="unmuteOverlay" class="unmute-overlay"><div class="unmute-btn"><svg viewBox="0 0 24 24" width="36" height="36" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></div><span class="unmute-text">انقر لتشغيل الصوت</span></div>
         <video id="video" playsinline webkit-playsinline autoplay muted></video>
-        <div class="glass-bar title-bar" id="titleBar"><span class="logo-text">ياسين Tv بلس</span><div class="video-title" dir="rtl"><%= match.team1 %> ضد <%= match.team2 %></div></div>
+        
+        <!-- تعديل الشعار ليكون رابط + تعديل العنوان -->
+        <div class="glass-bar title-bar" id="titleBar">
+            <a href="https://ytvplus.buzz/" target="_blank" class="logo-text">ياسين Tv بلس</a>
+            <div class="video-title" dir="rtl"><%= displayTitle %></div>
+        </div>
         
         <div id="serverPopup" class="server-popup">
             <div class="popup-header"><div class="popup-title"><span class="ar" dir="rtl">اختر الخادم</span></div><button class="close-server-popup" id="closeServerPopup">&times;</button></div>
@@ -337,7 +357,14 @@ router.get('/m', async (req, res) => {
             matches = matchRes.data;
         }
         
-        const matchInfo = matches.find(m => m.id_live === id_live) || { team1: 'الفريق الأول', team2: 'الفريق الثاني', title: 'بث مباشر', time: '' };
+        // جلب اسم المباراة الحقيقي 
+        const matchInfo = matches.find(m => m.id_live === id_live) || {};
+        
+        // استخراج العنوان سواء كان مسجل في title أو name أو كفريقين
+        let displayTitle = matchInfo.title || matchInfo.name || "بث مباشر";
+        if (matchInfo.team1 && matchInfo.team2 && displayTitle === "بث مباشر") {
+            displayTitle = `${matchInfo.team1} x ${matchInfo.team2}`;
+        }
 
         let parsedServers = serverCache.get(`servers_${id_live}`);
         if (!parsedServers) {
@@ -381,7 +408,14 @@ router.get('/m', async (req, res) => {
         const clientIp = getClientIp(req);
         const secureToken = generateSecureToken(clientIp);
         const fullUrl = `https://${req.get('host')}${req.originalUrl}`;
-        const renderedHtml = ejs.render(playerTemplate, { match: matchInfo, servers: parsedServers, id_live, token: secureToken, fullUrl, baseUrl: req.baseUrl });
+        const renderedHtml = ejs.render(playerTemplate, { 
+            displayTitle: displayTitle, 
+            servers: parsedServers, 
+            id_live, 
+            token: secureToken, 
+            fullUrl, 
+            baseUrl: req.baseUrl 
+        });
         res.send(renderedHtml);
 
     } catch (error) {
@@ -470,5 +504,4 @@ router.get('/proxy/segment.ts', verifyStreamAccess, async (req, res) => {
     }
 });
 
-// تصدير الـ Router ليتم استدعاؤه في Xstarts.js
 module.exports = router;
