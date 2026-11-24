@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>ARELim Smart Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #004b93;
+      --primary-dark: #003366;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --success: #10b981;
+      --success-dark: #059669;
+      --success-bg: #ecfdf5;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --danger-bg: #fef2f2;
+      --warning: #f59e0b;
+      --warning-bg: #fffbeb;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ==================== 1. شاشة تسجيل الدخول (كاملة ومتجاوبة) ==================== */
+    #loginWrapper {
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #003366 0%, #004b93 50%, #0284c7 100%);
+    }
+
+    .login-card {
+      background: var(--card);
+      width: 100%;
+      max-width: 460px;
+      border-radius: 24px;
+      padding: 32px 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    }
+
+    .login-brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-brand h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .login-brand p {
+      margin: 6px 0 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* الحسابات المحفوظة */
+    .saved-accounts-section {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+    .saved-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .accounts-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .account-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .account-chip:hover { background: #dbeafe; }
+    .account-chip .del-acc {
+      background: rgba(0, 75, 147, 0.15);
+      color: var(--primary-dark);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+    .account-chip .del-acc:hover { background: var(--danger); color: white; }
+
+    .input-group { margin-bottom: 16px; }
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      background: #f8fafc;
+      transition: 0.2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(0, 75, 147, 0.12);
+    }
+
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-left: 46px; }
+    .toggle-pass {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .toggle-pass:hover { color: var(--primary); }
+
+    /* إصلاح صورة الكابتشا لتظهر كاملة وبوضوح تام دون أي قص */
+    .captcha-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .captcha-box {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      min-height: 54px;
+      flex-shrink: 0;
+    }
+    .captcha-box:hover { border-color: var(--primary); }
+    .captcha-box img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 52px;
+      object-fit: contain;
+    }
+    .captcha-refresh-icon {
+      font-size: 16px;
+      color: var(--primary);
+      user-select: none;
+    }
+    .captcha-input {
+      flex: 1;
+      min-width: 130px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .checkbox-row input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      padding: 13px 20px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-block { width: 100%; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      box-shadow: 0 6px 16px rgba(0, 75, 147, 0.25);
+    }
+
+    /* ==================== 2. لوحة التحكم الرئيسية (Full Screen) ==================== */
+    #dashboardWrapper {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    /* الشريط العلوي (Top Navbar) */
+    .top-navbar {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: white;
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+    .navbar-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-brand h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .user-pill {
+      background: rgba(255, 255, 255, 0.16);
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* أزرار البوابة في الشريط العلوي */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn-nav-in {
+      background: var(--success);
+      color: white;
+      padding: 9px 16px;
+      font-size: 13.5px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+    }
+    .btn-nav-in:hover { background: var(--success-dark); }
+
+    .btn-nav-out {
+      background: var(--danger);
+      color: white;
+      padding: 9px 16px;
+      font-size: 13.5px;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+    }
+    .btn-nav-out:hover { background: var(--danger-dark); }
+
+    .btn-nav-switch {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+    .btn-nav-switch:hover { background: rgba(255, 255, 255, 0.25); }
+
+    /* المحتوى الرئيسي العريض */
+    .main-container {
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px 24px 40px;
+      flex: 1;
+    }
+
+    /* ==================== 3. صندوق التنبيه الذكي المكشوف في الأعلى ==================== */
+    .alert-banner {
+      display: none;
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .alert-success { background: var(--success-bg); border: 1.5px solid #6ee7b7; color: #065f46; }
+    .alert-warning { background: var(--warning-bg); border: 1.5px solid #fcd34d; color: #92400e; }
+    .alert-danger  { background: var(--danger-bg);  border: 1.5px solid #fca5a5; color: #991b1b; }
+    .alert-info    { background: var(--primary-light); border: 1.5px solid var(--primary-border); color: var(--primary-dark); }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .alert-title {
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+    .alert-msg {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .alert-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .raw-toggle-btn {
+      background: rgba(0, 0, 0, 0.07);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .raw-toggle-btn:hover { background: rgba(0, 0, 0, 0.14); }
+
+    .close-alert-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.7;
+      padding: 2px 6px;
+    }
+    .close-alert-btn:hover { opacity: 1; }
+
+    .raw-json-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      background: #0f172a;
+      color: #38bdf8;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      direction: ltr;
+      text-align: left;
+      white-space: pre-wrap;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .course-summary {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(6, 95, 70, 0.3);
+    }
+    .course-name {
+      font-weight: 800;
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #047857;
+    }
+    .hours-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hour-tag {
+      background: white;
+      border: 1px solid #6ee7b7;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      direction: ltr;
+    }
+
+    /* ==================== 4. قسم القاعات وحضور المحاضرة ==================== */
+    .yoklama-panel {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+    }
+
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .panel-title p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* صندوق القاعة المختارة حالياً + زر الحضور */
+    .selected-room-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      background: var(--primary-light);
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+    }
+    .selected-room-bar.empty {
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+    }
+    .selected-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .selected-badge {
+      background: var(--primary);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      direction: ltr;
+    }
+    .selected-room-bar.empty .selected-badge {
+      background: #94a3b8;
+    }
+    .selected-name {
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .selected-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .btn-yoklama-main {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white;
+      padding: 13px 26px;
+      font-size: 15px;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+      min-width: 220px;
+    }
+    .btn-yoklama-main:hover { filter: brightness(1.05); }
+
+    /* شريط البحث عن القاعات */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .search-wrapper input {
+      padding-right: 44px;
+      padding-left: 44px;
+      font-size: 15px;
+      background: #f8fafc;
+      border-radius: 14px;
+    }
+    .search-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .clear-search {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #e2e8f0;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+    }
+
+    /* شبكة القاعات التفاعلية */
+    .rooms-stats {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+
+    .room-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .room-card:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+      transform: translateY(-2px);
+    }
+    .room-card.active {
+      border: 2px solid var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(0, 75, 147, 0.15);
+    }
+    .room-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .room-code {
+      background: #f1f5f9;
+      color: var(--primary-dark);
+      padding: 3px 9px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      direction: ltr;
+    }
+    .room-card.active .room-code {
+      background: var(--primary);
+      color: white;
+    }
+    .room-check {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      display: none;
+    }
+    .room-card.active .room-check {
+      display: inline-block;
+    }
+    .room-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    /* التجاوب مع الهواتف (آيفون وأندرويد) */
+    @media (max-width: 640px) {
+      .top-navbar { padding: 12px 14px; }
+      .navbar-inner { flex-direction: column; align-items: stretch; }
+      .nav-brand { justify-content: space-between; }
+      .nav-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .btn-nav-switch { grid-column: span 2; justify-content: center; }
+      .main-container { padding: 14px; }
+      .yoklama-panel { padding: 16px; }
+      .selected-room-bar { flex-direction: column; align-items: stretch; }
+      .btn-yoklama-main { width: 100%; }
+      .rooms-grid { grid-template-columns: 1fr; max-height: 360px; }
+      .login-card { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== 1. شاشة تسجيل الدخول ==================== -->
+<div id="loginWrapper">
+  <div class="login-card">
+    <div class="login-brand">
+      <h1>🎓 بوابة ARELim </h1>
+      <p>تسجيل الدخول السريع والحضور الإلكتروني</p>
+    </div>
+
+    <!-- الحسابات المحفوظة -->
+    <div id="savedAccountsBox" class="saved-accounts-section" style="display: none;">
+      <span class="saved-label">⚡ التبديل السريع بين الحسابات المحفوظة:</span>
+      <div id="accountsList" class="accounts-list"></div>
+    </div>
+
+    <div class="input-group">
+      <label> اسم المستخدم</label>
+      <input type="text" id="username" placeholder=" أدخل اسم المستخدم" autocomplete="username">
+    </div>
+
+    <div class="input-group">
+      <label>كلمة المرور</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" placeholder="أدخل كلمة المرور" autocomplete="current-password">
+        <button type="button" class="toggle-pass" onclick="togglePassword()" title="إظهار / إخفاء كلمة المرور">
+          <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label>رمز التحقق (انقر على الصورة لتحديثها)</label>
+      <div class="captcha-container">
+        <div class="captcha-box" onclick="loadCaptcha()" title="اضغط لتحديث صورة الكابتشا">
+          <img id="captchaImg" src="" alt="جاري التحميل...">
+          <span class="captcha-refresh-icon">🔄</span>
+        </div>
+        <input type="number" id="captchaInput" class="captcha-input" placeholder="اكتب الناتج هنا">
+      </div>
+      <input type="hidden" id="captchaKey">
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="saveAccountCheck" checked>
+      <span>حفظ بيانات هذا الحساب للتبديل السريع مستقبلاً</span>
+    </label>
+
+    <button class="btn btn-primary btn-block" id="loginBtn" onclick="login()">
+      <span>تسجيل الدخول</span>
+    </button>
+
+    <!-- تنبيهات شاشة الدخول -->
+    <div id="loginAlertBox" class="alert-banner" style="margin-top: 16px; margin-bottom: 0;">
+      <div class="alert-header">
+        <div>
+          <div id="loginAlertTitle" class="alert-title"></div>
+          <div id="loginAlertMsg" class="alert-msg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 2. لوحة التحكم الرئيسية بعد الدخول ==================== -->
+<div id="dashboardWrapper">
+  <!-- الشريط العلوي -->
+  <header class="top-navbar">
+    <div class="navbar-inner">
+      <div class="nav-brand">
+        <h2>🎓 ARELim</h2>
+        <span class="user-pill" id="navUserBadge">مرحباً</span>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-nav-in" onclick="executeAction('checkin')">✅ تسجيل دخول البوابة</button>
+        <button class="btn btn-nav-out" onclick="executeAction('checkout')">🚪 تسجيل خروج البوابة</button>
+        <button class="btn btn-nav-switch" onclick="logoutView()">🔄 تبديل الحساب</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- صندوق التنبيه الذكي المكشوف في أعلى الصفحة -->
+    <div id="dashAlertBox" class="alert-banner">
+      <div class="alert-header">
+        <div>
+          <div id="dashAlertTitle" class="alert-title"></div>
+          <div id="dashAlertMsg" class="alert-msg"></div>
+        </div>
+        <div class="alert-controls">
+          <button type="button" id="rawBtn" class="raw-toggle-btn" onclick="toggleRawJson()" title="عرض رد السيرفر الأصلي">
+            <span>&lt;/&gt;</span> رد السيرفر
+          </button>
+          <button type="button" class="close-alert-btn" onclick="hideDashAlert()" title="إغلاق">✕</button>
+        </div>
+      </div>
+      <div id="courseDetails" class="course-summary" style="display: none;"></div>
+      <pre id="rawJsonBox" class="raw-json-box"></pre>
+    </div>
+
+    <!-- قسم اختيار القاعة وتسجيل الحضور -->
+    <section class="yoklama-panel">
+      <div class="panel-top">
+        <div class="panel-title">
+          <h3>📍 تسجيل حضور المحاضرة (Yoklama QR)</h3>
+          <p>ابحث برقم القاعة أو اسمها، انقر لاختيارها، ثم اضغط على زر تسجيل الحضور</p>
+        </div>
+      </div>
+
+      <!-- شريط القاعة المختارة حالياً -->
+      <div id="selectedRoomBar" class="selected-room-bar empty">
+        <div class="selected-info">
+          <span class="selected-badge" id="selectedRoomCode">لم يتم الاختيار</span>
+          <div>
+            <div class="selected-name" id="selectedRoomName">اختر القاعة من القائمة أدناه</div>
+            <div class="selected-sub" id="selectedRoomSub">انقر على أي بطاقة قاعة لتحديدها</div>
+          </div>
+        </div>
+
+        <button class="btn btn-yoklama-main" id="yoklamaBtn" onclick="executeYoklama()" disabled>
+          <span>📲 تسجيل الحضور في القاعة</span>
+        </button>
+      </div>
+
+      <!-- البحث عن القاعة -->
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="roomSearch" placeholder="اكتب رقم القاعة أو رمزها للبحث السريع (مثال: 110 أو Z05 أو D202 أو B103)..." oninput="filterRooms()">
+        <button type="button" id="clearSearchBtn" class="clear-search" onclick="clearSearch()" title="مسح البحث">✕</button>
+      </div>
+
+      <div class="rooms-stats">
+        <span id="roomsCountLabel">جاري تحميل القاعات...</span>
+        <span>انقر على القاعة لتحديدها</span>
+      </div>
+
+      <!-- شبكة بطاقات القاعات -->
+      <div id="roomsGrid" class="rooms-grid"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  let allRooms = [];
+  let selectedRoom = null;
+  const STORAGE_KEY = 'arelim_saved_accounts_v1';
+
+  // ==================== إدارة الحسابات المحفوظة ====================
+  function getSavedAccounts() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveAccountToStorage(username, password, displayName) {
+    let accounts = getSavedAccounts();
+    const cleanUser = username.trim();
+    accounts = accounts.filter(a => a.username !== cleanUser);
+    accounts.unshift({ username: cleanUser, password: password, name: displayName || cleanUser });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    renderSavedAccounts();
+  }
+
+  function deleteSavedAccount(e, username) {
+    e.stopPropagation();
+    let accounts = getSavedAccounts().filter(a => a.username !== username);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    renderSavedAccounts();
+  }
+
+  function fillAccount(username) {
+    const acc = getSavedAccounts().find(a => a.username === username);
+    if (acc) {
+      document.getElementById('username').value = acc.username;
+      document.getElementById('password').value = acc.password;
+      document.getElementById('captchaInput').focus();
+    }
+  }
+
+  function renderSavedAccounts() {
+    const accounts = getSavedAccounts();
+    const box = document.getElementById('savedAccountsBox');
+    const list = document.getElementById('accountsList');
+
+    if (accounts.length === 0) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    list.innerHTML = accounts.map(acc => `
+      <div class="account-chip" onclick="fillAccount('${acc.username}')" title="انقر لتعبئة البيانات تلقائياً">
+        <span>👤 ${acc.name}</span>
+        <span class="del-acc" onclick="deleteSavedAccount(event, '${acc.username}')" title="حذف الحساب">✕</span>
+      </div>
+    `).join('');
+  }
+
+  // ==================== إظهار / إخفاء كلمة المرور ====================
+  function togglePassword() {
+    const passInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+      eyeIcon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      `;
+    } else {
+      passInput.type = 'password';
+      eyeIcon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      `;
+    }
+  }
+
+  // ==================== التنبيهات الذكية ====================
+  function showLoginAlert(type, title, message) {
+    const box = document.getElementById('loginAlertBox');
+    box.className = `alert-banner alert-${type}`;
+    box.style.display = 'block';
+    document.getElementById('loginAlertTitle').textContent = title;
+    document.getElementById('loginAlertMsg').textContent = message;
+  }
+
+  function showDashAlert({ type, title, message, rawData = null, courseRows = null }) {
+    const box = document.getElementById('dashAlertBox');
+    const titleEl = document.getElementById('dashAlertTitle');
+    const msgEl = document.getElementById('dashAlertMsg');
+    const rawBtn = document.getElementById('rawBtn');
+    const rawBox = document.getElementById('rawJsonBox');
+    const courseBox = document.getElementById('courseDetails');
+
+    box.className = `alert-banner alert-${type}`;
+    box.style.display = 'block';
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+
+    rawBox.style.display = 'none';
+    if (rawData) {
+      rawBtn.style.display = 'inline-flex';
+      rawBox.textContent = typeof rawData === 'object' ? JSON.stringify(rawData, null, 2) : String(rawData);
+    } else {
+      rawBtn.style.display = 'none';
+    }
+
+    if (courseRows && Array.isArray(courseRows) && courseRows.length > 0) {
+      const courseName = courseRows[0].dersadi || 'تم تسجيل المادة';
+      const sortedRows = [...courseRows].sort((a, b) => (a.derssaatibaslangic || '').localeCompare(b.derssaatibaslangic || ''));
+      const hoursHtml = sortedRows.map(r => 
+        `<span class="hour-tag">🕒 ${r.derssaatibaslangic} - ${r.derssaatibitis}</span>`
+      ).join('');
+
+      courseBox.style.display = 'block';
+      courseBox.innerHTML = `
+        <div class="course-name">📚 ${courseName}</div>
+        <div class="hours-badges">${hoursHtml}</div>
+      `;
+    } else {
+      courseBox.style.display = 'none';
+      courseBox.innerHTML = '';
+    }
+
+    // تمرير الشاشة بسلاسة للأعلى ليرى المستخدم التنبيه بوضوح
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideDashAlert() {
+    document.getElementById('dashAlertBox').style.display = 'none';
+  }
+
+  function toggleRawJson() {
+    const rawBox = document.getElementById('rawJsonBox');
+    rawBox.style.display = rawBox.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // ==================== الكابتشا وتسجيل الدخول ====================
+  async function loadCaptcha() {
+    showLoginAlert('info', 'جاري التحميل...', 'يتم جلب صورة التحقق من نظام الجامعة');
+
+    try {
+      const res = await fetch('/api/captcha');
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('captchaImg').src = data.captchaImg;
+        document.getElementById('captchaKey').value = data.captchaKey;
+        document.getElementById('captchaInput').value = '';
+        document.getElementById('loginAlertBox').style.display = 'none';
+      } else {
+        showLoginAlert('danger', 'فشل جلب الكابتشا', data.message);
+      }
+    } catch (e) {
+      showLoginAlert('danger', 'خطأ في الاتصال', 'تعذر الوصول إلى السيرفر');
+    }
+  }
+
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const captcha = document.getElementById('captchaInput').value.trim();
+    const captchaKey = document.getElementById('captchaKey').value;
+    const shouldSave = document.getElementById('saveAccountCheck').checked;
+
+    if (!username || !password || !captcha) {
+      showLoginAlert('warning', 'بيانات ناقصة', 'يرجى إدخال الرقم الجامعي وكلمة المرور وناتج الكابتشا');
+      return;
+    }
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    showLoginAlert('info', 'جاري تسجيل الدخول...', 'يرجى الانتظار للتحقق من البيانات');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, captcha, captchaKey })
+      });
+
+      const data = await res.json();
+      btn.disabled = false;
+
+      if (data.success) {
+        if (shouldSave) {
+          saveAccountToStorage(username, password, data.user.name);
+        }
+        document.getElementById('loginWrapper').style.display = 'none';
+        document.getElementById('dashboardWrapper').style.display = 'flex';
+        document.getElementById('navUserBadge').textContent = `👤 ${data.user.name}`;
+        
+        showDashAlert({
+          type: 'info',
+          title: `أهلاً بك ${data.user.name}`,
+          message: 'اختر "تسجيل دخول البوابة" من الشريط العلوي، ثم حدد القاعة لتسجيل حضور المحاضرة.'
+        });
+
+        loadRooms();
+      } else {
+        showLoginAlert('danger', 'فشل تسجيل الدخول', data.message || 'تأكد من صحة البيانات أو الكابتشا');
+        loadCaptcha();
+      }
+    } catch (e) {
+      btn.disabled = false;
+      showLoginAlert('danger', 'خطأ في الاتصال', 'حدث خطأ أثناء محاولة تسجيل الدخول');
+    }
+  }
+
+  // ==================== تسجيل الدخول / الخروج من البوابة ====================
+  async function executeAction(type) {
+    const actionLabel = type === 'checkin' ? 'تسجيل الدخول للبوابة' : 'تسجيل الخروج من البوابة';
+    showDashAlert({ type: 'info', title: `جاري ${actionLabel}...`, message: 'يتم إرسال الطلب إلى سيرفر الجامعة' });
+
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+
+      const resJson = await res.json();
+      if (!resJson.success) {
+        showDashAlert({ type: 'danger', title: 'فشلت العملية', message: resJson.message, rawData: resJson });
+        return;
+      }
+
+      const srv = resJson.data || {};
+      const msg = (srv.mesaj || '').toUpperCase();
+      const status = srv.status;
+
+      if (status === 200 && msg.includes('WELLCOME')) {
+        showDashAlert({
+          type: 'success',
+          title: '✅ تم تسجيل الدخول إلى البوابة بنجاح!',
+          message: 'أهلاً بك (WELLCOME) — يمكنك الآن اختيار القاعة وتسجيل حضور المحاضرة.',
+          rawData: srv
+        });
+      } else if (status === 200 && msg.includes('GOOD BYE')) {
+        showDashAlert({
+          type: 'success',
+          title: '👋 تم تسجيل الخروج من البوابة بنجاح!',
+          message: 'تم تسجيل انصرافك بنجاح (GOOD BYE).',
+          rawData: srv
+        });
+      } else if (status === 501 && msg.includes('LOG IN AGAIN')) {
+        showDashAlert({
+          type: 'warning',
+          title: '⚠️ أنت مسجل دخول بالفعل!',
+          message: 'حسابك مسجل دخول مسبقاً في البوابة ولا حاجة لتسجيل الدخول مرة أخرى.',
+          rawData: srv
+        });
+      } else if (status === 501 && msg.includes('LOG OUT AGAIN')) {
+        showDashAlert({
+          type: 'warning',
+          title: '⚠️ أنت مسجل خروج بالفعل!',
+          message: 'تم تسجيل خروجك مسبقاً من البوابة ولا يمكن تسجيل الخروج مرة أخرى.',
+          rawData: srv
+        });
+      } else {
+        showDashAlert({
+          type: status === 200 ? 'success' : 'warning',
+          title: status === 200 ? 'تم تنفيذ الطلب' : 'تنبيه من النظام',
+          message: srv.mesaj || 'تم استلام رد من السيرفر',
+          rawData: srv
+        });
+      }
+    } catch (e) {
+      showDashAlert({ type: 'danger', title: 'خطأ في الاتصال', message: 'تعذر إرسال الطلب إلى السيرفر' });
+    }
+  }
+
+  // ==================== نظام البحث التفاعلي عن القاعات ====================
+  async function loadRooms() {
+    try {
+      const res = await fetch('/api/locations');
+      const data = await res.json();
+      if (data.success && data.rows) {
+        allRooms = data.rows;
+        renderRooms(allRooms);
+      } else {
+        document.getElementById('roomsCountLabel').textContent = 'تعذر تحميل قائمة القاعات';
+      }
+    } catch (e) {
+      document.getElementById('roomsCountLabel').textContent = 'خطأ في جلب القاعات';
+    }
+  }
+
+  function normalizeText(str) {
+    if (!str) return '';
+    return str.toLowerCase()
+      .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ş/g, 's')
+      .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c');
+  }
+
+  function renderRooms(rooms) {
+    const grid = document.getElementById('roomsGrid');
+    const countLabel = document.getElementById('roomsCountLabel');
+    countLabel.textContent = `عدد القاعات المعروضة: ${rooms.length}`;
+
+    if (rooms.length === 0) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 30px; color: var(--muted); font-weight:700;">لا توجد قاعة مطابقة لبحثك 🔍</div>`;
+      return;
+    }
+
+    grid.innerHTML = rooms.map(r => {
+      const isSelected = selectedRoom && String(selectedRoom.lokasyon_id) === String(r.lokasyon_id);
+      return `
+        <div class="room-card ${isSelected ? 'active' : ''}" onclick="selectRoom('${r.lokasyon_id}')">
+          <div class="room-card-top">
+            <span class="room-code">${r.lokasyon_kodu || ''}</span>
+            <span class="room-check">✓ محددة</span>
+          </div>
+          <div class="room-name">${r.lokasyon_adi || ''}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function selectRoom(lokasyonId) {
+    const found = allRooms.find(r => String(r.lokasyon_id) === String(lokasyonId));
+    if (!found) return;
+
+    selectedRoom = found;
+
+    // تحديث شريط القاعة المختارة بوضوح تام
+    const bar = document.getElementById('selectedRoomBar');
+    bar.classList.remove('empty');
+    document.getElementById('selectedRoomCode').textContent = found.lokasyon_kodu;
+    document.getElementById('selectedRoomName').textContent = found.lokasyon_adi;
+    document.getElementById('selectedRoomSub').textContent = '✓ جاهز لتسجيل الحضور في هذه القاعة';
+    document.getElementById('yoklamaBtn').disabled = false;
+
+    // إعادة رسم البطاقات لإبراز القاعة المختارة
+    filterRooms(false);
+  }
+
+  function filterRooms(resetScroll = true) {
+    const input = document.getElementById('roomSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const q = normalizeText(input.value.trim());
+
+    clearBtn.style.display = q.length > 0 ? 'flex' : 'none';
+
+    const filtered = allRooms.filter(r =>
+      normalizeText(r.lokasyon_adi).includes(q) ||
+      normalizeText(r.lokasyon_kodu).includes(q)
+    );
+
+    renderRooms(filtered);
+    if (resetScroll) {
+      document.getElementById('roomsGrid').scrollTop = 0;
+    }
+  }
+
+  function clearSearch() {
+    document.getElementById('roomSearch').value = '';
+    filterRooms();
+  }
+
+  // ==================== تسجيل حضور المحاضرة ====================
+  async function executeYoklama() {
+    if (!selectedRoom) {
+      showDashAlert({ type: 'warning', title: 'تنبيه', message: 'يرجى النقر على القاعة الدراسية لتحديدها أولاً' });
+      return;
+    }
+
+    const btn = document.getElementById('yoklamaBtn');
+    btn.disabled = true;
+    showDashAlert({
+      type: 'info',
+      title: 'جاري تسجيل الحضور...',
+      message: `يتم سحب رمز QR اللحظي لقاعة (${selectedRoom.lokasyon_kodu}) وتسجيل حضورك`
+    });
+
+    try {
+      const res = await fetch('/api/yoklama', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lokasyonId: selectedRoom.lokasyon_id })
+      });
+
+      const resJson = await res.json();
+      btn.disabled = false;
+
+      if (!resJson.success) {
+        showDashAlert({ type: 'danger', title: 'فشل تسجيل الحضور', message: resJson.message, rawData: resJson });
+        return;
+      }
+
+      const srv = resJson.data || {};
+      const cleanMsg = (srv.mesajtxt || '').replace(/Line Number:\s*\d+/gi, '').trim();
+
+      if (srv.success === true) {
+        showDashAlert({
+          type: 'success',
+          title: `🎉 تم تسجيل حضورك بنجاح في (${selectedRoom.lokasyon_kodu})!`,
+          message: 'تم اعتماد حضورك في المحاضرة بنجاح.',
+          rawData: srv,
+          courseRows: srv.rows
+        });
+      } else {
+        let friendlyTitle = '⚠️ لم يتم تسجيل الحضور';
+        let friendlyMsg = cleanMsg || 'تعذر تسجيل الحضور في هذه القاعة حالياً.';
+
+        if (srv.mesajid === -98 || cleanMsg.includes('aktif bir ders bulunmamaktadır')) {
+          friendlyTitle = '⏳ لا توجد محاضرة نشطة حالياً';
+          friendlyMsg = `لا توجد محاضرة جارية في قاعة (${selectedRoom.lokasyon_kodu}) الآن، أو أن الدكتور لم يبدأ الحضور بعد.`;
+        }
+
+        showDashAlert({
+          type: 'warning',
+          title: friendlyTitle,
+          message: friendlyMsg,
+          rawData: srv
+        });
+      }
+    } catch (e) {
+      btn.disabled = false;
+      showDashAlert({ type: 'danger', title: 'خطأ في الاتصال', message: 'حدث خطأ أثناء إرسال طلب الحضور' });
+    }
+  }
+
+  function logoutView() {
+    selectedRoom = null;
+    document.getElementById('selectedRoomBar').classList.add('empty');
+    document.getElementById('selectedRoomCode').textContent = 'لم يتم الاختيار';
+    document.getElementById('selectedRoomName').textContent = 'اختر القاعة من القائمة أدناه';
+    document.getElementById('selectedRoomSub').textContent = 'انقر على أي بطاقة قاعة لتحديدها';
+    document.getElementById('yoklamaBtn').disabled = true;
+    document.getElementById('roomSearch').value = '';
+
+    document.getElementById('dashboardWrapper').style.display = 'none';
+    document.getElementById('loginWrapper').style.display = 'flex';
+    hideDashAlert();
+    renderSavedAccounts();
+    loadCaptcha();
+  }
+
+  // التهيئة عند التشغيل
+  renderSavedAccounts();
+  const saved = getSavedAccounts();
+  if (saved.length > 0) {
+    fillAccount(saved[0].username);
+  }
+  loadCaptcha();
+</script>
+
+</body>
+</html>
