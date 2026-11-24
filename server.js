@@ -22,15 +22,31 @@ const QR_CODES = {
   checkout: '803609ec-0e8f-41c7-b4c3-3aad71b6543b'
 };
 
+// الهيدرز الثابتة الخاصة بتطبيق ARELim على الأندرويد (الكوكيز تدار ديناميكياً عبر CookieJar)
+const APP_HEADERS = {
+  'Accept': '*/*',
+  'Accept-Encoding': 'gzip, deflate, br, zstd',
+  'Accept-Language': 'ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Connection': 'keep-alive',
+  'Origin': 'https://arelim.arel.edu.tr',
+  'Referer': 'https://arelim.arel.edu.tr/student/main',
+  'sec-ch-ua': '"Chromium";v="124", "Android WebView";v="124", "Not-A.Brand";v="99"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Android"',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'same-origin',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 9; SO-41B Build/PQ3A.190705.10211540; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.82 Safari/537.36',
+  'X-Requested-With': 'tr.edu.arel.arelim'
+};
+
 function getClient(sessionId) {
   if (!userJars.has(sessionId)) {
     const jar = new CookieJar();
     const client = wrapper(axios.create({
       jar,
       withCredentials: true,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+      headers: { ...APP_HEADERS }
     }));
     userJars.set(sessionId, { client, jar });
   }
@@ -88,8 +104,7 @@ router.post('/api/login', async (req, res) => {
     const response = await client.post('https://arelim.arel.edu.tr/login/staff', payload, {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Referer': 'https://arelim.arel.edu.tr/login/sign-in',
-        'Origin': 'https://arelim.arel.edu.tr'
+        'Referer': 'https://arelim.arel.edu.tr/login/sign-in'
       }
     });
 
@@ -134,8 +149,7 @@ router.post('/api/action', async (req, res) => {
 
     const response = await client.get(targetUrl, {
       headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Referer': 'https://arelim.arel.edu.tr/student_dashboard'
+        'Referer': 'https://arelim.arel.edu.tr/student/main'
       }
     });
 
@@ -172,8 +186,7 @@ router.get('/api/locations', async (req, res) => {
     }, {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Referer': 'https://arelim.arel.edu.tr/tr/yoklamaqr',
-        'Origin': 'https://arelim.arel.edu.tr'
+        'Referer': 'https://arelim.arel.edu.tr/student/main'
       }
     });
 
@@ -207,8 +220,7 @@ router.post('/api/yoklama', async (req, res) => {
     }, {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Referer': 'https://arelim.arel.edu.tr/tr/yoklamaqr',
-        'Origin': 'https://arelim.arel.edu.tr'
+        'Referer': 'https://arelim.arel.edu.tr/student/main'
       }
     });
 
@@ -229,8 +241,7 @@ router.post('/api/yoklama', async (req, res) => {
     }, {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Referer': 'https://arelim.arel.edu.tr/student_dashboard',
-        'Origin': 'https://arelim.arel.edu.tr'
+        'Referer': 'https://arelim.arel.edu.tr/student/main'
       }
     });
 
