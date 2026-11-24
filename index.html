@@ -941,7 +941,7 @@
     showLoginAlert('info', 'جاري التحميل...', 'يتم جلب صورة التحقق من نظام الجامعة');
 
     try {
-      const res = await fetch('/api/captcha');
+      const res = await fetch('/arelim/api/captcha');
       const data = await res.json();
 
       if (data.success) {
@@ -974,7 +974,7 @@
     showLoginAlert('info', 'جاري تسجيل الدخول...', 'يرجى الانتظار للتحقق من البيانات');
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch('/arelim/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, captcha, captchaKey })
@@ -1014,7 +1014,7 @@
     showDashAlert({ type: 'info', title: `جاري ${actionLabel}...`, message: 'يتم إرسال الطلب إلى سيرفر الجامعة' });
 
     try {
-      const res = await fetch('/api/action', {
+      const res = await fetch('/arelim/api/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
@@ -1074,7 +1074,7 @@
   // ==================== نظام البحث التفاعلي عن القاعات ====================
   async function loadRooms() {
     try {
-      const res = await fetch('/api/locations');
+      const res = await fetch('/arelim/api/locations');
       const data = await res.json();
       if (data.success && data.rows) {
         allRooms = data.rows;
@@ -1175,7 +1175,7 @@
     });
 
     try {
-      const res = await fetch('/api/yoklama', {
+      const res = await fetch('/arelim/api/yoklama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lokasyonId: selectedRoom.lokasyon_id })
