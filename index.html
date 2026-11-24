@@ -39,7 +39,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ==================== 1. شاشة تسجيل الدخول (كاملة ومتجاوبة) ==================== */
+    /* ==================== 1. شاشة تسجيل الدخول ==================== */
     #loginWrapper {
       min-height: 100vh;
       width: 100%;
@@ -167,7 +167,6 @@
     }
     .toggle-pass:hover { color: var(--primary); }
 
-    /* إصلاح صورة الكابتشا لتظهر كاملة وبوضوح تام دون أي قص */
     .captcha-container {
       display: flex;
       flex-wrap: wrap;
@@ -247,14 +246,13 @@
       box-shadow: 0 6px 16px rgba(0, 75, 147, 0.25);
     }
 
-    /* ==================== 2. لوحة التحكم الرئيسية (Full Screen) ==================== */
+    /* ==================== 2. لوحة التحكم الرئيسية ==================== */
     #dashboardWrapper {
       display: none;
       min-height: 100vh;
       flex-direction: column;
     }
 
-    /* الشريط العلوي (Top Navbar) */
     .top-navbar {
       background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
       color: white;
@@ -291,7 +289,6 @@
       font-weight: 700;
     }
 
-    /* أزرار البوابة في الشريط العلوي */
     .nav-actions {
       display: flex;
       align-items: center;
@@ -325,7 +322,6 @@
     }
     .btn-nav-switch:hover { background: rgba(255, 255, 255, 0.25); }
 
-    /* المحتوى الرئيسي العريض */
     .main-container {
       width: 100%;
       max-width: 1320px;
@@ -334,7 +330,7 @@
       flex: 1;
     }
 
-    /* ==================== 3. صندوق التنبيه الذكي المكشوف في الأعلى ==================== */
+    /* ==================== 3. صندوق التنبيه الذكي ==================== */
     .alert-banner {
       display: none;
       border-radius: 16px;
@@ -471,7 +467,6 @@
       color: var(--muted);
     }
 
-    /* صندوق القاعة المختارة حالياً + زر الحضور */
     .selected-room-bar {
       display: flex;
       align-items: center;
@@ -526,7 +521,6 @@
     }
     .btn-yoklama-main:hover { filter: brightness(1.05); }
 
-    /* شريط البحث عن القاعات */
     .search-wrapper {
       position: relative;
       margin-bottom: 18px;
@@ -565,7 +559,6 @@
       color: var(--text);
     }
 
-    /* شبكة القاعات التفاعلية */
     .rooms-stats {
       font-size: 12.5px;
       font-weight: 700;
@@ -640,7 +633,6 @@
       line-height: 1.4;
     }
 
-    /* التجاوب مع الهواتف (آيفون وأندرويد) */
     @media (max-width: 640px) {
       .top-navbar { padding: 12px 14px; }
       .navbar-inner { flex-direction: column; align-items: stretch; }
@@ -666,7 +658,6 @@
       <p>تسجيل الدخول السريع والحضور الإلكتروني</p>
     </div>
 
-    <!-- الحسابات المحفوظة -->
     <div id="savedAccountsBox" class="saved-accounts-section" style="display: none;">
       <span class="saved-label">⚡ التبديل السريع بين الحسابات المحفوظة:</span>
       <div id="accountsList" class="accounts-list"></div>
@@ -711,7 +702,6 @@
       <span>تسجيل الدخول</span>
     </button>
 
-    <!-- تنبيهات شاشة الدخول -->
     <div id="loginAlertBox" class="alert-banner" style="margin-top: 16px; margin-bottom: 0;">
       <div class="alert-header">
         <div>
@@ -725,7 +715,6 @@
 
 <!-- ==================== 2. لوحة التحكم الرئيسية بعد الدخول ==================== -->
 <div id="dashboardWrapper">
-  <!-- الشريط العلوي -->
   <header class="top-navbar">
     <div class="navbar-inner">
       <div class="nav-brand">
@@ -742,7 +731,6 @@
   </header>
 
   <main class="main-container">
-    <!-- صندوق التنبيه الذكي المكشوف في أعلى الصفحة -->
     <div id="dashAlertBox" class="alert-banner">
       <div class="alert-header">
         <div>
@@ -760,7 +748,6 @@
       <pre id="rawJsonBox" class="raw-json-box"></pre>
     </div>
 
-    <!-- قسم اختيار القاعة وتسجيل الحضور -->
     <section class="yoklama-panel">
       <div class="panel-top">
         <div class="panel-title">
@@ -769,7 +756,6 @@
         </div>
       </div>
 
-      <!-- شريط القاعة المختارة حالياً -->
       <div id="selectedRoomBar" class="selected-room-bar empty">
         <div class="selected-info">
           <span class="selected-badge" id="selectedRoomCode">لم يتم الاختيار</span>
@@ -784,7 +770,6 @@
         </button>
       </div>
 
-      <!-- البحث عن القاعة -->
       <div class="search-wrapper">
         <span class="search-icon">🔍</span>
         <input type="text" id="roomSearch" placeholder="اكتب رقم القاعة أو رمزها للبحث السريع (مثال: 110 أو Z05 أو D202 أو B103)..." oninput="filterRooms()">
@@ -796,7 +781,6 @@
         <span>انقر على القاعة لتحديدها</span>
       </div>
 
-      <!-- شبكة بطاقات القاعات -->
       <div id="roomsGrid" class="rooms-grid"></div>
     </section>
   </main>
@@ -923,7 +907,6 @@
       courseBox.innerHTML = '';
     }
 
-    // تمرير الشاشة بسلاسة للأعلى ليرى المستخدم التنبيه بوضوح
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1124,7 +1107,6 @@
 
     selectedRoom = found;
 
-    // تحديث شريط القاعة المختارة بوضوح تام
     const bar = document.getElementById('selectedRoomBar');
     bar.classList.remove('empty');
     document.getElementById('selectedRoomCode').textContent = found.lokasyon_kodu;
@@ -1132,7 +1114,6 @@
     document.getElementById('selectedRoomSub').textContent = '✓ جاهز لتسجيل الحضور في هذه القاعة';
     document.getElementById('yoklamaBtn').disabled = false;
 
-    // إعادة رسم البطاقات لإبراز القاعة المختارة
     filterRooms(false);
   }
 
@@ -1204,7 +1185,10 @@
         let friendlyTitle = '⚠️ لم يتم تسجيل الحضور';
         let friendlyMsg = cleanMsg || 'تعذر تسجيل الحضور في هذه القاعة حالياً.';
 
-        if (srv.mesajid === -98 || cleanMsg.includes('aktif bir ders bulunmamaktadır')) {
+        if (cleanMsg.includes('Kampüse girişiniz olmadığı için') || cleanMsg.includes('not entered the campus')) {
+          friendlyTitle = '🚪 يجب تسجيل الدخول إلى البوابة أولاً!';
+          friendlyMsg = 'لا يمكن تسجيل حضور المحاضرة قبل المرور من البوابة. اضغط على زر "✅ تسجيل دخول البوابة" في الشريط العلوي أولاً ثم أعد المحاولة.';
+        } else if (srv.mesajid === -98 || cleanMsg.includes('aktif bir ders bulunmamaktadır')) {
           friendlyTitle = '⏳ لا توجد محاضرة نشطة حالياً';
           friendlyMsg = `لا توجد محاضرة جارية في قاعة (${selectedRoom.lokasyon_kodu}) الآن، أو أن الدكتور لم يبدأ الحضور بعد.`;
         }
