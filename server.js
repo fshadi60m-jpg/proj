@@ -46,7 +46,7 @@ router.get('/', (req, res) => {
 });
 
 // 1. جلب الكابتشا
-router.get('/api/captcha', async (req, res) => {
+router.get('/arelim/api/captcha', async (req, res) => {
   try {
     userJars.delete(req.sessionID);
     const { client } = getClient(req.sessionID);
